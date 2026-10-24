@@ -110,12 +110,12 @@ details{margin-top:14px}summary{font-weight:750;cursor:pointer;list-style:none;d
       <p class="hint">Значения можно изменить вручную. Если автоматический источник недоступен, калькулятор сообщит об этом.</p>
     </div>
   </details>
-  <p class="note">Оценка основана на текущем хешрейте сети и награде 3,125 BTC за блок. Фактическая добыча меняется вместе со сложностью сети, временем простоя и условиями пула. Не является гарантией дохода.</p>
+  <p class="note">Оценка основана на текущем хешрейте сети и награде 3,125 BTC за блок. Фактическая добыча меняется вместе со сложностью сети, временем простоя и условиями пула. Не учтены возможные комиссии вывода, ремонт, охлаждение и хостинг, если их не добавить вручную. Не является гарантией дохода.</p>
 </div>
 
 <section id="catalog" class="catalog">
   <div class="catalog-head"><button type="button" class="back" id="backBtn">← Назад</button><h2>Выбор ASIC</h2></div>
-  <p class="catalog-sub">Выбери устройство для расчёта. Цены и наличие не отображаются.</p>
+  <p class="catalog-sub">Выбери устройство для расчёта. Цены и наличие не отображаются. Характеристики ориентировочные; проверь модификацию перед покупкой.</p>
   <div class="filters"><input id="searchModel" type="search" placeholder="Поиск модели…" aria-label="Поиск модели"><select id="manufacturer" aria-label="Фильтр производителя"><option value="all">Все производители</option><option value="Bitmain">Bitmain · Antminer</option><option value="MicroBT">MicroBT · WhatsMiner</option><option value="Canaan">Canaan · Avalon</option></select></div>
   <div class="catalog-grid" id="catalogGrid"></div><div class="empty" id="emptyState">Ничего не найдено. Попробуй изменить поиск.</div>
 </section>
@@ -158,7 +158,14 @@ details{margin-top:14px}summary{font-weight:750;cursor:pointer;list-style:none;d
   };
   const num=id=>{const v=parseFloat(String($(id).value).replace(",","."));return Number.isFinite(v)&&v>=0?v:0;};
   const toUsd=(amount,currency)=>currency==="RUB"?(num("usdRub")>0?amount/num("usdRub"):NaN):amount;
-  const toDisplay=(usdAmount)=>state.outputCurrency==="RUB"&&num("usdRub")>0?money(usdAmount*num("usdRub"),"RUB"):money(usdAmount,"USD");
+  const toDisplay=(usdAmount)=>{
+    if (!Number.isFinite(usdAmount)) return "—";
+    if (state.outputCurrency === "RUB") {
+      const fx = num("usdRub");
+      return fx > 0 ? money(usdAmount * fx, "RUB") : "Нет курса ₽";
+    }
+    return money(usdAmount, "USD");
+  };
   state.outputCurrency="USD";
 
   function currentDevice(){return devices[state.selected]||devices[2];}
@@ -220,35 +227,60 @@ details{margin-top:14px}summary{font-weight:750;cursor:pointer;list-style:none;d
     const month=netProfit*30, year=netProfit*365;
     $("profit").textContent=toDisplay(netProfit);$("profit").className="big "+(netProfit>=0?"positive":"negative");
     $("income").textContent=toDisplay(gross);
-    $("poolCost").textContent="−"+toDisplay(pool).replace(/^−/,"");
-    $("electricCost").textContent="−"+toDisplay(electric).replace(/^−/,"");
-    $("extraCost").textContent="−"+toDisplay(extraDay).replace(/^−/,"");
+    $("poolCost").textContent=toDisplay(pool);
+    $("electricCost").textContent=toDisplay(electric);
+    $("extraCost").textContent=toDisplay(extraDay);
     $("monthProfit").textContent=toDisplay(month);$("yearProfit").textContent=toDisplay(year);
     $("btcDay").textContent=fmt(mined,8)+" BTC";
     $("powerDay").textContent=fmt(watts/1000*24*uptime,2)+" kWh";
     const dailyCosts=electric+extraDay;
-    $("breakEven").textContent=mined>0?money(dailyCosts/(mined*(1-fee)),"USD",0):"—";
+    const breakEvenUsd = mined > 0 ? dailyCosts/(mined*(1-fee)) : NaN;
+    $("breakEven").textContent = Number.isFinite(breakEvenUsd)
+      ? (state.outputCurrency === "RUB" && fx > 0 ? money(breakEvenUsd*fx,"RUB",0) : state.outputCurrency === "RUB" ? "Нет курса ₽" : money(breakEvenUsd,"USD",0))
+      : "—";
     if(!num("asicPrice")){$("payback").textContent="Укажи цену ASIC";$("recovered").textContent="—";}
     else if(netProfit>0&&Number.isFinite(price)&&price>0){$("payback").textContent=fmt(price/netProfit,0)+" дн. ("+fmt(price/netProfit/30.4375,1)+" мес.)";$("recovered").textContent=fmt(year/price*100,0)+"%";}
     else{$("payback").textContent="—";$("recovered").textContent="—";}
   }
 
   async function loadMarket(){
-    $("status").textContent="Обновляю данные…";$("status").classList.remove("error");$("refreshBtn").disabled=true;
-    const get=async url=>{const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);return r.json();};
-    const tasks=await Promise.allSettled([
-      get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"),
-      get("https://mempool.space/api/v1/mining/hashrate/3d"),
-      get("https://www.cbr-xml-daily.ru/daily_json.js")
-    ]);
-    let successes=0;
-    if(tasks[0].status==="fulfilled"&&tasks[0].value.bitcoin?.usd){$("btcPrice").value=tasks[0].value.bitcoin.usd;successes++;}
-    if(tasks[1].status==="fulfilled"&&tasks[1].value.currentHashrate>0){$("networkHash").value=(tasks[1].value.currentHashrate/1e18).toFixed(3);successes++;}
-    if(tasks[2].status==="fulfilled"&&tasks[2].value.Valute?.USD?.Value){$("usdRub").value=tasks[2].value.Valute.USD.Value;successes++;}
-    const now=new Date();state.marketUpdated=now;
-    if(successes===3){$("status").textContent="Все источники обновлены."; $("updated").textContent="Обновлено: "+now.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});}
-    else{$("status").textContent=`Обновлено источников: ${successes}/3. Проверь данные вручную.`;$("status").classList.add("error");$("updated").textContent="Данные обновлены частично";document.querySelector('details.settings:last-of-type').open=true;}
-    $("refreshBtn").disabled=false;calc();
+    $("status").textContent="Обновляю данные…";
+    $("status").classList.remove("error");
+    $("refreshBtn").disabled=true;
+    const get=async url=>{
+      const r=await fetch(url,{cache:"no-store"});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    };
+    try {
+      const tasks=await Promise.allSettled([
+        get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"),
+        get("https://mempool.space/api/v1/mining/hashrate/3d"),
+        get("https://www.cbr-xml-daily.ru/daily_json.js")
+      ]);
+      let successes=0;
+      if(tasks[0].status==="fulfilled"&&Number(tasks[0].value.bitcoin?.usd)>0){$("btcPrice").value=tasks[0].value.bitcoin.usd;successes++;}
+      if(tasks[1].status==="fulfilled"&&Number(tasks[1].value.currentHashrate)>0){$("networkHash").value=(tasks[1].value.currentHashrate/1e18).toFixed(3);successes++;}
+      if(tasks[2].status==="fulfilled"&&Number(tasks[2].value.Valute?.USD?.Value)>0){$("usdRub").value=tasks[2].value.Valute.USD.Value;successes++;}
+      const now=new Date();state.marketUpdated=now;
+      if(successes===3){
+        $("status").textContent="Все источники обновлены.";
+        $("updated").textContent="Обновлено: "+now.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+      } else {
+        $("status").textContent=`Не удалось обновить все источники (${successes}/3). Проверь соединение или введи значения вручную.`;
+        $("status").classList.add("error");
+        $("updated").textContent="Данные обновлены частично";
+        document.querySelector('details.settings:last-of-type').open=true;
+      }
+    } catch (error) {
+      $("status").textContent="Ошибка загрузки рыночных данных. Проверь соединение или введи значения вручную.";
+      $("status").classList.add("error");
+      $("updated").textContent="Нет свежих данных";
+      document.querySelector('details.settings:last-of-type').open=true;
+    } finally {
+      $("refreshBtn").disabled=false;
+      calc();
+    }
   }
   ["electricity","asicPrice","extraMonthly","poolFee","uptime","customTh","customW","btcPrice","networkHash","usdRub"].forEach(id=>$(id).addEventListener("input",calc));
   $("refreshBtn").addEventListener("click",loadMarket);
