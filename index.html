@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Калькулятор TTM</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0f1319;--panel:#181d26;--line:#2a3140;--tx:#eef1f6;--mut:#8d96a7;--ac:#ffb020;--ok:#46d39a;--bad:#ff6b6b}
+:root.light{--bg:#f3f4f7;--panel:#fff;--line:#e0e3ea;--tx:#161a22;--mut:#6a7385;--ac:#e08a00;--ok:#13a56b;--bad:#e5484d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:16px 16px calc(28px + env(safe-area-inset-bottom));font-variant-numeric:tabular-nums}
+main{max-width:480px;margin:0 auto}
+h1{font-size:20px;margin:4px 0 14px;font-weight:650}
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
+.hero small{color:var(--mut);display:block}
+.big{font-size:44px;font-weight:700;line-height:1.1;margin:2px 0 14px;letter-spacing:-.02em}
+.big.ok{color:var(--ok)}.big.bad{color:var(--bad)}
+.bar{height:10px;border-radius:5px;background:var(--ok);overflow:hidden;display:flex}
+.bar i{display:block;height:100%;background:var(--ac);width:0;transition:width .25s}
+.legend{display:flex;justify-content:space-between;margin-top:8px;font-size:14px;color:var(--mut)}
+.legend b{color:var(--tx);font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.grid div{border-top:1px solid var(--line);padding-top:10px}
+.grid span{display:block;color:var(--mut);font-size:13px}
+.grid b{font-size:18px;font-weight:600}
+form,details{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}
+label{display:block;font-size:14px;color:var(--mut);margin:12px 0 5px}
+label:first-child{margin-top:0}
+input,select{width:100%;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;outline:none}
+input:focus,select:focus{border-color:var(--ac)}
+.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+.seg{display:flex;flex:0 0 96px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--bg);color:var(--mut);font:inherit;font-weight:600}
+.seg button.on{background:var(--ac);color:#111}
+summary{cursor:pointer;font-weight:600}
+#st{font-size:13px;color:var(--mut);margin:10px 0 0}
+.note{font-size:12px;color:var(--mut);margin:14px 4px 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<h1>Калькулятор майнинга</h1>
+
+<section class="hero">
+  <small>Прибыль в сутки</small>
+  <div class="big" id="profit">-</div>
+  <div class="bar"><i id="cbar"></i></div>
+  <div class="legend"><span>Доход <b id="inc">-</b></span><span>Электричество <b id="cost">-</b></span></div>
+  <div class="grid">
+    <div><span>Прибыль в месяц</span><b id="pm">-</b></div>
+    <div><span>Окупаемость</span><b id="pay">-</b></div>
+    <div><span>Добыча в сутки</span><b id="btcd">-</b></div>
+    <div><span>Безубыточный курс BTC</span><b id="be">-</b></div>
+  </div>
+</section>
+
+<form onsubmit="return false">
+  <label for="dev">Устройство</label>
+  <select id="dev"></select>
+  <div id="cust" hidden>
+    <div class="row">
+      <div><label for="th">Хешрейт, TH/s</label><input id="th" type="number" inputmode="decimal" value="200"></div>
+      <div><label for="w">Мощность, Вт</label><input id="w" type="number" inputmode="decimal" value="3500"></div>
+    </div>
+  </div>
+  <label for="kwh">Цена электричества за 1 кВт·ч</label>
+  <div class="row">
+    <input id="kwh" type="number" inputmode="decimal" step="any" value="0.07">
+    <div class="seg"><button type="button" data-c="usd" class="on">$</button><button type="button" data-c="rub">₽</button></div>
+  </div>
+  <label for="price">Цена устройства, $ (по желанию, для окупаемости)</label>
+  <input id="price" type="number" inputmode="decimal" placeholder="0">
+  <label for="fee">Комиссия пула, %</label>
+  <input id="fee" type="number" inputmode="decimal" step="any" value="2">
+</form>
+
+<details>
+  <summary>Рыночные данные</summary>
+  <label for="btc">Курс BTC, $</label><input id="btc" type="number" inputmode="decimal">
+  <label for="net">Хешрейт сети, EH/s</label><input id="net" type="number" inputmode="decimal">
+  <label for="fx">Курс доллара, ₽</label><input id="fx" type="number" inputmode="decimal" step="any">
+  <p id="st">Загружаю данные...</p>
+</details>
+
+<p class="note">Это оценка. Она не учитывает комиссии транзакций, рост сложности, охлаждение и хостинг. Награда за блок: 3.125 BTC.</p>
+</main>
+
+<script>
+const tg = window.Telegram && Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); if (tg.colorScheme === "light") document.documentElement.classList.add("light"); }
+
+// Устройство: [TH/s, Вт]. Проверь и дополни данными из своего прайса.
+const D = {
+  "Antminer S21 XP": [270, 3645], "Antminer S21 Pro": [234, 3510], "Antminer S21": [200, 3500],
+  "Antminer S19k Pro": [120, 2760], "Antminer S19j Pro": [100, 3050],
+  "Whatsminer M60S": [186, 3441], "Whatsminer M50S": [126, 3276]
+};
+const REWARD = 3.125;
+const $ = id => document.getElementById(id);
+const dev = $("dev");
+Object.keys(D).forEach(n => dev.add(new Option(n, n)));
+dev.add(new Option("Своё устройство", "custom"));
+
+let cur = "usd";
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
+  cur = b.dataset.c;
+  document.querySelectorAll(".seg button").forEach(x => x.classList.toggle("on", x === b));
+  calc();
+});
+
+const num = id => parseFloat(String($(id).value).replace(",", ".")) || 0;
+const f = (n, d = 2) => n.toLocaleString("ru-RU", { minimumFractionDigits: d, maximumFractionDigits: d });
+const usd = (n, d = 2) => (n < 0 ? "-" : "") + "$" + f(Math.abs(n), d);
+
+function calc() {
+  const custom = dev.value === "custom";
+  $("cust").hidden = !custom;
+  const [th, w] = custom ? [num("th"), num("w")] : D[dev.value];
+  const btc = num("btc"), net = num("net") * 1e18, fx = num("fx"), fee = num("fee") / 100;
+  let p = num("kwh");
+  if (cur === "rub") p = fx ? p / fx : 0;
+
+  const day = net ? th * 1e12 / net * 144 * REWARD * (1 - fee) : 0;
+  const inc = day * btc, cost = w / 1000 * 24 * p, pr = inc - cost, price = num("price");
+
+  $("profit").textContent = usd(pr);
+  $("profit").className = "big " + (pr >= 0 ? "ok" : "bad");
+  $("inc").textContent = usd(inc);
+  $("cost").textContent = usd(cost);
+  $("cbar").style.width = inc > 0 ? Math.min(100, cost / inc * 100) + "%" : "100%";
+  $("pm").textContent = usd(pr * 30, 0) + (fx ? " (" + f(pr * 30 * fx, 0) + " ₽)" : "");
+  $("btcd").textContent = f(day, 8) + " BTC";
+  $("be").textContent = day ? "$" + f(cost / day, 0) : "-";
+  $("pay").textContent = !price ? "-" : pr > 0 ? f(price / pr, 0) + " дн. (" + f(price / pr / 30, 1) + " мес.)" : "не окупится";
+}
+
+document.querySelectorAll("input").forEach(i => i.addEventListener("input", calc));
+dev.addEventListener("change", calc);
+
+async function load() {
+  const get = u => fetch(u).then(r => r.json());
+  const [a, b, c] = await Promise.allSettled([
+    get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"),
+    get("https://mempool.space/api/v1/mining/hashrate/3d"),
+    get("https://www.cbr-xml-daily.ru/daily_json.js")
+  ]);
+  let ok = 0;
+  if (a.status === "fulfilled") { $("btc").value = Math.round(a.value.bitcoin.usd); ok++; }
+  if (b.status === "fulfilled") { $("net").value = Math.round(b.value.currentHashrate / 1e18); ok++; }
+  if (c.status === "fulfilled") { $("fx").value = c.value.Valute.USD.Value.toFixed(2); ok++; }
+  $("st").textContent = ok === 3 ? "Данные обновлены. Любое значение можно изменить." : "Часть данных не загрузилась. Впиши недостающие значения вручную.";
+  if (ok < 3) $("st").closest("details").open = true;
+  calc();
+}
+calc();
+load();
+</script>
+</body>
+</html>
