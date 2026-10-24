@@ -3,159 +3,257 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Калькулятор TTM</title>
+<meta name="theme-color" content="#101114">
+<title>TTM — Калькулятор майнинга</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--bg:#0f1319;--panel:#181d26;--line:#2a3140;--tx:#eef1f6;--mut:#8d96a7;--ac:#ffb020;--ok:#46d39a;--bad:#ff6b6b}
-:root.light{--bg:#f3f4f7;--panel:#fff;--line:#e0e3ea;--tx:#161a22;--mut:#6a7385;--ac:#e08a00;--ok:#13a56b;--bad:#e5484d}
+:root{color-scheme:dark;--bg:#101114;--panel:#191a1f;--panel2:#202127;--line:#303139;--tx:#f5f5f6;--mut:#9b9ca6;--orange:#ff8a24;--orange2:#ffad52;--green:#46d39a;--red:#ff626b;--shadow:0 14px 40px #0003}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:16px 16px calc(28px + env(safe-area-inset-bottom));font-variant-numeric:tabular-nums}
-main{max-width:480px;margin:0 auto}
-h1{font-size:20px;margin:4px 0 14px;font-weight:650}
-.hero{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
-.hero small{color:var(--mut);display:block}
-.big{font-size:44px;font-weight:700;line-height:1.1;margin:2px 0 14px;letter-spacing:-.02em}
-.big.ok{color:var(--ok)}.big.bad{color:var(--bad)}
-.bar{height:10px;border-radius:5px;background:var(--ok);overflow:hidden;display:flex}
-.bar i{display:block;height:100%;background:var(--ac);width:0;transition:width .25s}
-.legend{display:flex;justify-content:space-between;margin-top:8px;font-size:14px;color:var(--mut)}
-.legend b{color:var(--tx);font-weight:600}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
-.grid div{border-top:1px solid var(--line);padding-top:10px}
-.grid span{display:block;color:var(--mut);font-size:13px}
-.grid b{font-size:18px;font-weight:600}
-form,details{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}
-label{display:block;font-size:14px;color:var(--mut);margin:12px 0 5px}
-label:first-child{margin-top:0}
-input,select{width:100%;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;outline:none}
-input:focus,select:focus{border-color:var(--ac)}
-.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
-.seg{display:flex;flex:0 0 96px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.seg button{flex:1;border:0;background:var(--bg);color:var(--mut);font:inherit;font-weight:600}
-.seg button.on{background:var(--ac);color:#111}
-summary{cursor:pointer;font-weight:600}
-#st{font-size:13px;color:var(--mut);margin:10px 0 0}
-.note{font-size:12px;color:var(--mut);margin:14px 4px 0}
-[hidden]{display:none!important}
+body{margin:0;background:radial-gradient(ellipse at 50% -15%,#38200f 0,transparent 40%),var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 16px calc(30px + env(safe-area-inset-bottom));font-variant-numeric:tabular-nums}
+main{max-width:760px;margin:0 auto}
+header{display:flex;align-items:center;gap:12px;padding:22px 0 18px}
+.ttm-mark{width:46px;height:46px;flex:0 0 46px;display:flex;align-items:center;justify-content:center;gap:4px}
+.ttm-mark span{display:block;width:8px;height:34px;background:linear-gradient(180deg,#ffad52,#ff7a18);transform:skew(-28deg);border-radius:1px}
+.ttm-mark span:nth-child(2){height:38px}
+.ttm-mark span:nth-child(3){height:34px}
+.brand{min-width:0}.brandline{font-size:19px;font-weight:850;letter-spacing:1.2px}.tagline{font-size:10px;letter-spacing:2.3px;color:var(--orange);font-weight:800;margin-top:-2px}
+.head-title{margin-left:auto;text-align:right}.head-title strong{display:block;font-size:14px}.head-title span{color:var(--mut);font-size:11px}
+h1{font-size:24px;letter-spacing:-.7px;margin:8px 0 5px;font-weight:780}.intro{margin:0 0 18px;color:var(--mut);font-size:13px}
+.panel{background:linear-gradient(145deg,#1c1d23,#17181d);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.result-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.eyebrow{font-size:12px;color:var(--mut)}.updated{font-size:11px;color:var(--mut);text-align:right;max-width:48%}
+.big{font-size:clamp(34px,8vw,48px);font-weight:850;line-height:1.08;letter-spacing:-1.7px;margin:7px 0 14px;overflow-wrap:anywhere}.positive{color:var(--green)}.negative{color:var(--red)}
+.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}.metric{border-top:1px solid var(--line);padding:12px 0 9px;min-width:0}.metric span{display:block;color:var(--mut);font-size:12px;margin-bottom:4px}.metric b{font-size:17px;font-weight:700;overflow-wrap:anywhere}.metric.primary b{color:var(--orange2)}
+.section-title{font-size:14px;font-weight:750;margin:20px 2px 10px}
+form,.settings{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:17px}
+label{display:block;font-size:12px;color:var(--mut);margin:13px 0 6px}label:first-child{margin-top:0}
+input,select,button{font:inherit}input,select{width:100%;color:var(--tx);background:#111216;border:1px solid var(--line);border-radius:12px;padding:12px;outline:none;min-width:0}input:focus,select:focus{border-color:var(--orange)}
+.row{display:flex;gap:9px;align-items:stretch}.row>*{flex:1;min-width:0}.currency{display:flex;flex:0 0 auto;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#111216}.currency button{border:0;background:transparent;color:var(--mut);padding:0 13px;font-weight:750}.currency button.active{background:var(--orange);color:#17100a}
+button{cursor:pointer}.device-select{width:100%;text-align:left;background:#111216;border:1px solid var(--line);border-radius:13px;padding:13px;display:flex;align-items:center;gap:12px;color:var(--tx)}.device-select:hover{border-color:var(--orange)}.device-icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(145deg,#34353c,#222329);display:grid;place-items:center;color:var(--orange);font-size:21px;flex:0 0 44px}.device-copy{flex:1;min-width:0}.device-copy b{display:block;font-size:14px}.device-copy small{display:block;color:var(--mut);font-size:11px}.arrow{font-size:22px;color:var(--orange)}
+.primary-btn{width:100%;border:0;border-radius:13px;background:linear-gradient(100deg,var(--orange),var(--orange2));color:#1b1008;font-weight:850;padding:14px;margin-top:14px}
+details{margin-top:14px}summary{font-weight:750;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}summary::-webkit-details-marker{display:none}summary:after{content:"＋";color:var(--orange);font-size:20px}details[open] summary:after{content:"−"}
+.details-inner{padding-top:7px}.hint{color:var(--mut);font-size:11px;margin:10px 0 0}.status{font-size:11px;color:var(--mut);margin:12px 1px 0}.status.error{color:var(--red)}
+.note{font-size:11px;color:var(--mut);margin:15px 4px 0}
+.catalog{display:none}.catalog.visible{display:block}.calculator.hidden{display:none}
+.catalog-head{display:flex;align-items:center;gap:10px;margin:12px 0 14px}.back{border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--tx);padding:10px 13px;font-weight:700}.catalog-head h2{font-size:20px;margin:0}.catalog-sub{color:var(--mut);font-size:12px;margin:0 0 14px}
+.filters{display:grid;grid-template-columns:1fr minmax(130px,.55fr);gap:9px;margin-bottom:14px}.catalog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.asic-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:11px;min-width:0;text-align:left;color:var(--tx);transition:border-color .15s,transform .15s}.asic-card:hover,.asic-card.selected{border-color:var(--orange)}.asic-card:active{transform:scale(.99)}
+.asic-photo{height:112px;border-radius:11px;background:radial-gradient(ellipse at 50% 30%,#383940,#202126 68%);display:grid;place-items:center;position:relative;overflow:hidden;margin-bottom:10px}.asic-photo img{width:100%;height:100%;object-fit:contain;display:none}.asic-photo .placeholder{font-size:40px;color:var(--orange);filter:drop-shadow(0 6px 10px #0008)}.asic-photo .placeholder small{display:block;font-size:8px;letter-spacing:1.8px;text-align:center;color:#c2c2c8;margin-top:3px}.asic-card h3{font-size:13px;line-height:1.3;margin:0 0 7px;min-height:34px}.maker{font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}.specs{display:grid;grid-template-columns:1fr 1fr;gap:5px}.specs span{font-size:10px;color:var(--mut);display:block}.specs b{font-size:12px}.select-label{display:block;margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:11px;font-weight:750;color:var(--orange)}
+.empty{display:none;padding:20px;text-align:center;color:var(--mut);font-size:13px}
+@media(min-width:620px){.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.metrics{grid-template-columns:repeat(4,minmax(0,1fr))}.metric{padding-right:8px}.asic-photo{height:130px}}
+@media(max-width:390px){body{padding-left:11px;padding-right:11px}.head-title{display:none}.panel,form,.settings{padding:14px}.big{font-size:35px}.filters{grid-template-columns:1fr}.asic-photo{height:94px}.asic-card{padding:9px}}
 </style>
 </head>
 <body>
 <main>
-<h1>Калькулятор майнинга</h1>
+<header>
+  <div class="ttm-mark" aria-label="Логотип TTM"><span></span><span></span><span></span></div>
+  <div class="brand"><div class="brandline">TTM</div><div class="tagline">TO THE MOON</div></div>
+  <div class="head-title"><strong>Калькулятор доходности</strong><span>Bitcoin mining</span></div>
+</header>
 
-<section class="hero">
-  <small>Прибыль в сутки</small>
-  <div class="big" id="profit">-</div>
-  <div class="bar"><i id="cbar"></i></div>
-  <div class="legend"><span>Доход <b id="inc">-</b></span><span>Электричество <b id="cost">-</b></span></div>
-  <div class="grid">
-    <div><span>Прибыль в месяц</span><b id="pm">-</b></div>
-    <div><span>Окупаемость</span><b id="pay">-</b></div>
-    <div><span>Добыча в сутки</span><b id="btcd">-</b></div>
-    <div><span>Безубыточный курс BTC</span><b id="be">-</b></div>
-  </div>
-</section>
-
-<form onsubmit="return false">
-  <label for="dev">Устройство</label>
-  <select id="dev"></select>
-  <div id="cust" hidden>
-    <div class="row">
-      <div><label for="th">Хешрейт, TH/s</label><input id="th" type="number" inputmode="decimal" value="200"></div>
-      <div><label for="w">Мощность, Вт</label><input id="w" type="number" inputmode="decimal" value="3500"></div>
+<div id="calculator" class="calculator">
+  <h1>Калькулятор майнинга</h1>
+  <p class="intro">Рассчитай доходность ASIC при текущих рыночных условиях.</p>
+  <section class="panel" aria-live="polite">
+    <div class="result-top"><span class="eyebrow">Чистая прибыль в сутки</span><div style="display:flex;align-items:center;gap:9px;justify-content:flex-end"><div class="currency" id="outputCurrency"><button type="button" data-value="USD" class="active">$</button><button type="button" data-value="RUB">₽</button></div><span class="updated" id="updated">Загрузка рыночных данных…</span></div></div>
+    <div class="big" id="profit">—</div>
+    <div class="metrics">
+      <div class="metric"><span>Доход от майнинга / день</span><b id="income">—</b></div>
+      <div class="metric"><span>Комиссия пула / день</span><b id="poolCost">—</b></div>
+      <div class="metric"><span>Электричество / день</span><b id="electricCost">—</b></div>
+      <div class="metric"><span>Доп. расходы / день</span><b id="extraCost">—</b></div>
+      <div class="metric"><span>Прибыль в месяц</span><b id="monthProfit">—</b></div>
+      <div class="metric"><span>Прибыль за год</span><b id="yearProfit">—</b></div>
+      <div class="metric"><span>Добыча BTC / день</span><b id="btcDay">—</b></div>
+      <div class="metric"><span>Потребление / день</span><b id="powerDay">—</b></div>
+      <div class="metric"><span>Безубыточный курс BTC</span><b id="breakEven">—</b></div>
+      <div class="metric primary"><span>Окупаемость</span><b id="payback">Укажи цену ASIC</b></div>
+      <div class="metric"><span>Окупаемость стоимости за год</span><b id="recovered">—</b></div>
     </div>
-  </div>
-  <label for="kwh">Цена электричества за 1 кВт·ч</label>
-  <div class="row">
-    <input id="kwh" type="number" inputmode="decimal" step="any" value="0.07">
-    <div class="seg"><button type="button" data-c="usd" class="on">$</button><button type="button" data-c="rub">₽</button></div>
-  </div>
-  <label for="price">Цена устройства, $ (по желанию, для окупаемости)</label>
-  <input id="price" type="number" inputmode="decimal" placeholder="0">
-  <label for="fee">Комиссия пула, %</label>
-  <input id="fee" type="number" inputmode="decimal" step="any" value="2">
-</form>
+  </section>
 
-<details>
-  <summary>Рыночные данные</summary>
-  <label for="btc">Курс BTC, $</label><input id="btc" type="number" inputmode="decimal">
-  <label for="net">Хешрейт сети, EH/s</label><input id="net" type="number" inputmode="decimal">
-  <label for="fx">Курс доллара, ₽</label><input id="fx" type="number" inputmode="decimal" step="any">
-  <p id="st">Загружаю данные...</p>
-</details>
+  <form id="calcForm">
+    <label>Устройство</label>
+    <button type="button" class="device-select" id="openCatalog">
+      <span class="device-icon">▤</span><span class="device-copy"><b id="selectedName">Antminer S21</b><small id="selectedSpecs">200 TH/s · 3500 W</small></span><span class="arrow">›</span>
+    </button>
+    <div id="customFields" hidden>
+      <div class="row">
+        <div><label for="customTh">Хешрейт, TH/s</label><input id="customTh" type="number" min="0" step="any" value="200"></div>
+        <div><label for="customW">Мощность, Вт</label><input id="customW" type="number" min="0" step="any" value="3500"></div>
+      </div>
+    </div>
 
-<p class="note">Это оценка. Она не учитывает комиссии транзакций, рост сложности, охлаждение и хостинг. Награда за блок: 3.125 BTC.</p>
+    <label for="electricity">Тариф электричества за 1 кВт·ч</label>
+    <div class="row"><input id="electricity" type="number" min="0" step="any" value="5.5"><div class="currency" data-currency="electricity"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD">$</button></div></div>
+    <label for="asicPrice">Стоимость ASIC (необязательно)</label>
+    <div class="row"><input id="asicPrice" type="number" min="0" step="any" placeholder="Например, 250000"><div class="currency" data-currency="asicPrice"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD">$</button></div></div>
+    <button type="button" class="primary-btn" id="refreshBtn">Обновить данные и пересчитать</button>
+    <p class="status" id="status">Подключение к источникам рыночных данных…</p>
+  </form>
+
+  <details class="settings">
+    <summary>Дополнительные настройки</summary>
+    <div class="details-inner">
+      <label for="poolFee">Комиссия пула, %</label><input id="poolFee" type="number" min="0" max="100" step="any" value="2">
+      <label for="extraMonthly">Дополнительные расходы за месяц</label>
+      <div class="row"><input id="extraMonthly" type="number" min="0" step="any" value="0"><div class="currency" data-currency="extraMonthly"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD"> $ </button></div></div>
+      <p class="hint">Можно учесть охлаждение, хостинг и обслуживание. Значение по умолчанию — 0.</p>
+      <label for="uptime">Время работы оборудования, %</label><input id="uptime" type="number" min="1" max="100" step="1" value="100">
+    </div>
+  </details>
+  <details class="settings">
+    <summary>Рыночные данные</summary>
+    <div class="details-inner">
+      <label for="btcPrice">Курс BTC, USD</label><input id="btcPrice" type="number" min="0" step="any" placeholder="Автоматически">
+      <label for="networkHash">Хешрейт сети, EH/s</label><input id="networkHash" type="number" min="0" step="any" placeholder="Автоматически">
+      <label for="usdRub">Курс USD/RUB</label><input id="usdRub" type="number" min="0" step="any" placeholder="Автоматически">
+      <p class="hint">Значения можно изменить вручную. Если автоматический источник недоступен, калькулятор сообщит об этом.</p>
+    </div>
+  </details>
+  <p class="note">Оценка основана на текущем хешрейте сети и награде 3,125 BTC за блок. Фактическая добыча меняется вместе со сложностью сети, временем простоя и условиями пула. Не является гарантией дохода.</p>
+</div>
+
+<section id="catalog" class="catalog">
+  <div class="catalog-head"><button type="button" class="back" id="backBtn">← Назад</button><h2>Выбор ASIC</h2></div>
+  <p class="catalog-sub">Выбери устройство для расчёта. Цены и наличие не отображаются.</p>
+  <div class="filters"><input id="searchModel" type="search" placeholder="Поиск модели…" aria-label="Поиск модели"><select id="manufacturer" aria-label="Фильтр производителя"><option value="all">Все производители</option><option value="Bitmain">Bitmain · Antminer</option><option value="MicroBT">MicroBT · WhatsMiner</option><option value="Canaan">Canaan · Avalon</option></select></div>
+  <div class="catalog-grid" id="catalogGrid"></div><div class="empty" id="emptyState">Ничего не найдено. Попробуй изменить поиск.</div>
+</section>
 </main>
-
 <script>
-const tg = window.Telegram && Telegram.WebApp;
-if (tg) { tg.ready(); tg.expand(); if (tg.colorScheme === "light") document.documentElement.classList.add("light"); }
+(() => {
+  "use strict";
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) { tg.ready(); tg.expand(); }
 
-// Устройство: [TH/s, Вт]. Проверь и дополни данными из своего прайса.
-const D = {
-  "Antminer S21 XP": [270, 3645], "Antminer S21 Pro": [234, 3510], "Antminer S21": [200, 3500],
-  "Antminer S19k Pro": [120, 2760], "Antminer S19j Pro": [100, 3050],
-  "Whatsminer M60S": [186, 3441], "Whatsminer M50S": [126, 3276]
-};
-const REWARD = 3.125;
-const $ = id => document.getElementById(id);
-const dev = $("dev");
-Object.keys(D).forEach(n => dev.add(new Option(n, n)));
-dev.add(new Option("Своё устройство", "custom"));
+  // Характеристики являются ориентировочными; сверяйте конкретную модификацию перед покупкой.
+  const devices = [
+    {name:"Antminer S21 XP",maker:"Bitmain",th:270,w:3645},
+    {name:"Antminer S21 Pro",maker:"Bitmain",th:234,w:3510},
+    {name:"Antminer S21",maker:"Bitmain",th:200,w:3500},
+    {name:"Antminer S21+",maker:"Bitmain",th:216,w:3564},
+    {name:"Antminer S21 XP Hyd",maker:"Bitmain",th:473,w:5676, cooling:"Гидро"},
+    {name:"Antminer S19k Pro",maker:"Bitmain",th:120,w:2760},
+    {name:"Antminer S19j Pro",maker:"Bitmain",th:100,w:3050},
+    {name:"Antminer S19 XP",maker:"Bitmain",th:140,w:3010},
+    {name:"Antminer S19 Pro",maker:"Bitmain",th:110,w:3250},
+    {name:"Antminer S19",maker:"Bitmain",th:95,w:3250},
+    {name:"Whatsminer M60S",maker:"MicroBT",th:186,w:3441},
+    {name:"Whatsminer M60",maker:"MicroBT",th:172,w:3420},
+    {name:"Whatsminer M50S",maker:"MicroBT",th:126,w:3276},
+    {name:"Whatsminer M50",maker:"MicroBT",th:114,w:3306},
+    {name:"Whatsminer M30S++",maker:"MicroBT",th:112,w:3472},
+    {name:"Avalon A1566",maker:"Canaan",th:185,w:3420},
+    {name:"Avalon A1466",maker:"Canaan",th:150,w:3230},
+    {name:"Avalon A1366",maker:"Canaan",th:130,w:3250}
+  ];
+  const $ = id => document.getElementById(id);
+  const state = {selected:2, currency:{electricity:"RUB",asicPrice:"RUB",extraMonthly:"RUB"}, marketUpdated:null};
+  const REWARD=3.125, BLOCKS_PER_DAY=144;
+  const fmt=(n,d=2)=>Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});
+  const money=(n,c="USD",d=2)=> {
+    if (!Number.isFinite(n)) return "—";
+    const symbol=c==="RUB"?"₽":"$";
+    return (n<0?"−":"")+symbol+fmt(Math.abs(n),d);
+  };
+  const num=id=>{const v=parseFloat(String($(id).value).replace(",","."));return Number.isFinite(v)&&v>=0?v:0;};
+  const toUsd=(amount,currency)=>currency==="RUB"?(num("usdRub")>0?amount/num("usdRub"):NaN):amount;
+  const toDisplay=(usdAmount)=>state.outputCurrency==="RUB"&&num("usdRub")>0?money(usdAmount*num("usdRub"),"RUB"):money(usdAmount,"USD");
+  state.outputCurrency="USD";
 
-let cur = "usd";
-document.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
-  cur = b.dataset.c;
-  document.querySelectorAll(".seg button").forEach(x => x.classList.toggle("on", x === b));
-  calc();
-});
+  function currentDevice(){return devices[state.selected]||devices[2];}
+  function showDevice(){const d=currentDevice();$("selectedName").textContent=d.name;$("selectedSpecs").textContent=`${d.th} TH/s · ${d.w} W${d.cooling?" · "+d.cooling:""}`;}
+  function renderCatalog(){
+    const grid=$("catalogGrid");grid.innerHTML="";
+    const q=$("searchModel").value.trim().toLowerCase(), maker=$("manufacturer").value;
+    let count=0;
+    devices.forEach((d,index)=>{
+      if((maker==="all"||d.maker===maker)&&d.name.toLowerCase().includes(q)){
+        count++;
+        const card=document.createElement("button");card.type="button";card.className="asic-card"+(index===state.selected?" selected":"");
+        const photo=document.createElement("div");photo.className="asic-photo";
+        const ph=document.createElement("div");ph.className="placeholder";ph.innerHTML='▤<small>ASIC MINER</small>';photo.appendChild(ph);
+        const title=document.createElement("h3");title.textContent=d.name;
+        const brand=document.createElement("div");brand.className="maker";brand.textContent=d.maker;
+        const specs=document.createElement("div");specs.className="specs";
+        specs.innerHTML=`<div><span>Хешрейт</span><b>${d.th} TH/s</b></div><div><span>Мощность</span><b>${d.w.toLocaleString("ru-RU")} W</b></div>`;
+        const pick=document.createElement("span");pick.className="select-label";pick.textContent=index===state.selected?"✓ Выбрано":"Выбрать устройство";
+        card.append(photo,title,brand,specs,pick);
+        card.addEventListener("click",()=>{state.selected=index;showDevice();$("customFields").hidden=true;$("calculator").classList.remove("hidden");$("catalog").classList.remove("visible");calc();window.scrollTo({top:0,behavior:"smooth"});});
+        grid.appendChild(card);
+      }
+    });
+    $("emptyState").style.display=count?"none":"block";
+  }
+  $("openCatalog").addEventListener("click",()=>{$("calculator").classList.add("hidden");$("catalog").classList.add("visible");renderCatalog();window.scrollTo({top:0,behavior:"smooth"});});
+  $("backBtn").addEventListener("click",()=>{$("catalog").classList.remove("visible");$("calculator").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"});});
+  $("searchModel").addEventListener("input",renderCatalog);$("manufacturer").addEventListener("change",renderCatalog);
 
-const num = id => parseFloat(String($(id).value).replace(",", ".")) || 0;
-const f = (n, d = 2) => n.toLocaleString("ru-RU", { minimumFractionDigits: d, maximumFractionDigits: d });
-const usd = (n, d = 2) => (n < 0 ? "-" : "") + "$" + f(Math.abs(n), d);
+  $("outputCurrency").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{state.outputCurrency=btn.dataset.value;$("outputCurrency").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b===btn));calc();}));
 
-function calc() {
-  const custom = dev.value === "custom";
-  $("cust").hidden = !custom;
-  const [th, w] = custom ? [num("th"), num("w")] : D[dev.value];
-  const btc = num("btc"), net = num("net") * 1e18, fx = num("fx"), fee = num("fee") / 100;
-  let p = num("kwh");
-  if (cur === "rub") p = fx ? p / fx : 0;
+  document.querySelectorAll(".currency:not(#outputCurrency)").forEach(group=>{
+    group.querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
+      state.currency[group.dataset.currency]=btn.dataset.value;
+      group.querySelectorAll("button").forEach(b=>b.classList.toggle("active",b===btn));
+      calc();
+    }));
+  });
 
-  const day = net ? th * 1e12 / net * 144 * REWARD * (1 - fee) : 0;
-  const inc = day * btc, cost = w / 1000 * 24 * p, pr = inc - cost, price = num("price");
+  function calc(){
+    const d=currentDevice();
+    const custom=$("customFields").hidden===false;
+    const th=custom?num("customTh"):d.th, watts=custom?num("customW"):d.w;
+    const btc=num("btcPrice"), net=num("networkHash")*1e18, fx=num("usdRub");
+    const fee=Math.min(100,num("poolFee"))/100, uptime=Math.min(100,Math.max(1,num("uptime")))/100;
+    const powerPrice=toUsd(num("electricity"),state.currency.electricity);
+    const extra=toUsd(num("extraMonthly"),state.currency.extraMonthly);
+    const price=toUsd(num("asicPrice"),state.currency.asicPrice);
+    const dataReady=btc>0&&net>0&&Number.isFinite(powerPrice)&&powerPrice>=0&&Number.isFinite(extra);
+    if(!dataReady){
+      $("profit").textContent="Недостаточно данных";$("profit").className="big";
+      ["income","poolCost","electricCost","extraCost","monthProfit","yearProfit","btcDay","powerDay","breakEven","payback","recovered"].forEach(id=>$(id).textContent="—");
+      return;
+    }
+    const mined=th*1e12/net*BLOCKS_PER_DAY*REWARD*uptime;
+    const gross=mined*btc, pool=gross*fee, electric=watts/1000*24*uptime*powerPrice;
+    const extraDay=extra/30, netProfit=gross-pool-electric-extraDay;
+    const month=netProfit*30, year=netProfit*365;
+    $("profit").textContent=toDisplay(netProfit);$("profit").className="big "+(netProfit>=0?"positive":"negative");
+    $("income").textContent=toDisplay(gross);
+    $("poolCost").textContent="−"+toDisplay(pool).replace(/^−/,"");
+    $("electricCost").textContent="−"+toDisplay(electric).replace(/^−/,"");
+    $("extraCost").textContent="−"+toDisplay(extraDay).replace(/^−/,"");
+    $("monthProfit").textContent=toDisplay(month);$("yearProfit").textContent=toDisplay(year);
+    $("btcDay").textContent=fmt(mined,8)+" BTC";
+    $("powerDay").textContent=fmt(watts/1000*24*uptime,2)+" kWh";
+    const dailyCosts=electric+extraDay;
+    $("breakEven").textContent=mined>0?money(dailyCosts/(mined*(1-fee)),"USD",0):"—";
+    if(!num("asicPrice")){$("payback").textContent="Укажи цену ASIC";$("recovered").textContent="—";}
+    else if(netProfit>0&&Number.isFinite(price)&&price>0){$("payback").textContent=fmt(price/netProfit,0)+" дн. ("+fmt(price/netProfit/30.4375,1)+" мес.)";$("recovered").textContent=fmt(year/price*100,0)+"%";}
+    else{$("payback").textContent="—";$("recovered").textContent="—";}
+  }
 
-  $("profit").textContent = usd(pr);
-  $("profit").className = "big " + (pr >= 0 ? "ok" : "bad");
-  $("inc").textContent = usd(inc);
-  $("cost").textContent = usd(cost);
-  $("cbar").style.width = inc > 0 ? Math.min(100, cost / inc * 100) + "%" : "100%";
-  $("pm").textContent = usd(pr * 30, 0) + (fx ? " (" + f(pr * 30 * fx, 0) + " ₽)" : "");
-  $("btcd").textContent = f(day, 8) + " BTC";
-  $("be").textContent = day ? "$" + f(cost / day, 0) : "-";
-  $("pay").textContent = !price ? "-" : pr > 0 ? f(price / pr, 0) + " дн. (" + f(price / pr / 30, 1) + " мес.)" : "не окупится";
-}
-
-document.querySelectorAll("input").forEach(i => i.addEventListener("input", calc));
-dev.addEventListener("change", calc);
-
-async function load() {
-  const get = u => fetch(u).then(r => r.json());
-  const [a, b, c] = await Promise.allSettled([
-    get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"),
-    get("https://mempool.space/api/v1/mining/hashrate/3d"),
-    get("https://www.cbr-xml-daily.ru/daily_json.js")
-  ]);
-  let ok = 0;
-  if (a.status === "fulfilled") { $("btc").value = Math.round(a.value.bitcoin.usd); ok++; }
-  if (b.status === "fulfilled") { $("net").value = Math.round(b.value.currentHashrate / 1e18); ok++; }
-  if (c.status === "fulfilled") { $("fx").value = c.value.Valute.USD.Value.toFixed(2); ok++; }
-  $("st").textContent = ok === 3 ? "Данные обновлены. Любое значение можно изменить." : "Часть данных не загрузилась. Впиши недостающие значения вручную.";
-  if (ok < 3) $("st").closest("details").open = true;
-  calc();
-}
-calc();
-load();
+  async function loadMarket(){
+    $("status").textContent="Обновляю данные…";$("status").classList.remove("error");$("refreshBtn").disabled=true;
+    const get=async url=>{const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);return r.json();};
+    const tasks=await Promise.allSettled([
+      get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"),
+      get("https://mempool.space/api/v1/mining/hashrate/3d"),
+      get("https://www.cbr-xml-daily.ru/daily_json.js")
+    ]);
+    let successes=0;
+    if(tasks[0].status==="fulfilled"&&tasks[0].value.bitcoin?.usd){$("btcPrice").value=tasks[0].value.bitcoin.usd;successes++;}
+    if(tasks[1].status==="fulfilled"&&tasks[1].value.currentHashrate>0){$("networkHash").value=(tasks[1].value.currentHashrate/1e18).toFixed(3);successes++;}
+    if(tasks[2].status==="fulfilled"&&tasks[2].value.Valute?.USD?.Value){$("usdRub").value=tasks[2].value.Valute.USD.Value;successes++;}
+    const now=new Date();state.marketUpdated=now;
+    if(successes===3){$("status").textContent="Все источники обновлены."; $("updated").textContent="Обновлено: "+now.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});}
+    else{$("status").textContent=`Обновлено источников: ${successes}/3. Проверь данные вручную.`;$("status").classList.add("error");$("updated").textContent="Данные обновлены частично";document.querySelector('details.settings:last-of-type').open=true;}
+    $("refreshBtn").disabled=false;calc();
+  }
+  ["electricity","asicPrice","extraMonthly","poolFee","uptime","customTh","customW","btcPrice","networkHash","usdRub"].forEach(id=>$(id).addEventListener("input",calc));
+  $("refreshBtn").addEventListener("click",loadMarket);
+  showDevice();renderCatalog();calc();loadMarket();
+})();
 </script>
 </body>
 </html>
