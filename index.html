@@ -1,291 +1,260 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#101114">
-<title>TTM — Калькулятор майнинга</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101114"><title>Калькулятор TTM — доходность майнинга</title><script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{color-scheme:dark;--bg:#101114;--panel:#191a1f;--panel2:#202127;--line:#303139;--tx:#f5f5f6;--mut:#9b9ca6;--orange:#ff8a24;--orange2:#ffad52;--green:#46d39a;--red:#ff626b;--shadow:0 14px 40px #0003}
-*{box-sizing:border-box}
-body{margin:0;background:radial-gradient(ellipse at 50% -15%,#38200f 0,transparent 40%),var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 16px calc(30px + env(safe-area-inset-bottom));font-variant-numeric:tabular-nums}
-main{max-width:760px;margin:0 auto}
-header{display:flex;align-items:center;gap:12px;padding:22px 0 18px}
-.ttm-mark{width:46px;height:46px;flex:0 0 46px;display:flex;align-items:center;justify-content:center;gap:4px}
-.ttm-mark span{display:block;width:8px;height:34px;background:linear-gradient(180deg,#ffad52,#ff7a18);transform:skew(-28deg);border-radius:1px}
-.ttm-mark span:nth-child(2){height:38px}
-.ttm-mark span:nth-child(3){height:34px}
-.brand{min-width:0}.brandline{font-size:19px;font-weight:850;letter-spacing:1.2px}.tagline{font-size:10px;letter-spacing:2.3px;color:var(--orange);font-weight:800;margin-top:-2px}
-.head-title{margin-left:auto;text-align:right}.head-title strong{display:block;font-size:14px}.head-title span{color:var(--mut);font-size:11px}
-h1{font-size:24px;letter-spacing:-.7px;margin:8px 0 5px;font-weight:780}.intro{margin:0 0 18px;color:var(--mut);font-size:13px}
-.panel{background:linear-gradient(145deg,#1c1d23,#17181d);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
-.result-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.eyebrow{font-size:12px;color:var(--mut)}.updated{font-size:11px;color:var(--mut);text-align:right;max-width:48%}
-.big{font-size:clamp(34px,8vw,48px);font-weight:850;line-height:1.08;letter-spacing:-1.7px;margin:7px 0 14px;overflow-wrap:anywhere}.positive{color:var(--green)}.negative{color:var(--red)}
-.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}.metric{border-top:1px solid var(--line);padding:12px 0 9px;min-width:0}.metric span{display:block;color:var(--mut);font-size:12px;margin-bottom:4px}.metric b{font-size:17px;font-weight:700;overflow-wrap:anywhere}.metric.primary b{color:var(--orange2)}
-.section-title{font-size:14px;font-weight:750;margin:20px 2px 10px}
-form,.settings{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:17px}
-label{display:block;font-size:12px;color:var(--mut);margin:13px 0 6px}label:first-child{margin-top:0}
-input,select,button{font:inherit}input,select{width:100%;color:var(--tx);background:#111216;border:1px solid var(--line);border-radius:12px;padding:12px;outline:none;min-width:0}input:focus,select:focus{border-color:var(--orange)}
-.row{display:flex;gap:9px;align-items:stretch}.row>*{flex:1;min-width:0}.currency{display:flex;flex:0 0 auto;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#111216}.currency button{border:0;background:transparent;color:var(--mut);padding:0 13px;font-weight:750}.currency button.active{background:var(--orange);color:#17100a}
-button{cursor:pointer}.device-select{width:100%;text-align:left;background:#111216;border:1px solid var(--line);border-radius:13px;padding:13px;display:flex;align-items:center;gap:12px;color:var(--tx)}.device-select:hover{border-color:var(--orange)}.device-icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(145deg,#34353c,#222329);display:grid;place-items:center;color:var(--orange);font-size:21px;flex:0 0 44px}.device-copy{flex:1;min-width:0}.device-copy b{display:block;font-size:14px}.device-copy small{display:block;color:var(--mut);font-size:11px}.arrow{font-size:22px;color:var(--orange)}
-.primary-btn{width:100%;border:0;border-radius:13px;background:linear-gradient(100deg,var(--orange),var(--orange2));color:#1b1008;font-weight:850;padding:14px;margin-top:14px}
-details{margin-top:14px}summary{font-weight:750;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}summary::-webkit-details-marker{display:none}summary:after{content:"＋";color:var(--orange);font-size:20px}details[open] summary:after{content:"−"}
-.details-inner{padding-top:7px}.hint{color:var(--mut);font-size:11px;margin:10px 0 0}.status{font-size:11px;color:var(--mut);margin:12px 1px 0}.status.error{color:var(--red)}
-.note{font-size:11px;color:var(--mut);margin:15px 4px 0}
-.catalog{display:none}.catalog.visible{display:block}.calculator.hidden{display:none}
-.catalog-head{display:flex;align-items:center;gap:10px;margin:12px 0 14px}.back{border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--tx);padding:10px 13px;font-weight:700}.catalog-head h2{font-size:20px;margin:0}.catalog-sub{color:var(--mut);font-size:12px;margin:0 0 14px}
-.filters{display:grid;grid-template-columns:1fr minmax(130px,.55fr);gap:9px;margin-bottom:14px}.catalog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.asic-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:11px;min-width:0;text-align:left;color:var(--tx);transition:border-color .15s,transform .15s}.asic-card:hover,.asic-card.selected{border-color:var(--orange)}.asic-card:active{transform:scale(.99)}
-.asic-photo{height:112px;border-radius:11px;background:radial-gradient(ellipse at 50% 30%,#383940,#202126 68%);display:grid;place-items:center;position:relative;overflow:hidden;margin-bottom:10px}.asic-photo img{width:100%;height:100%;object-fit:contain;display:none}.asic-photo .placeholder{font-size:40px;color:var(--orange);filter:drop-shadow(0 6px 10px #0008)}.asic-photo .placeholder small{display:block;font-size:8px;letter-spacing:1.8px;text-align:center;color:#c2c2c8;margin-top:3px}.asic-card h3{font-size:13px;line-height:1.3;margin:0 0 7px;min-height:34px}.maker{font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}.specs{display:grid;grid-template-columns:1fr 1fr;gap:5px}.specs span{font-size:10px;color:var(--mut);display:block}.specs b{font-size:12px}.select-label{display:block;margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:11px;font-weight:750;color:var(--orange)}
-.empty{display:none;padding:20px;text-align:center;color:var(--mut);font-size:13px}
-@media(min-width:620px){.catalog-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.metrics{grid-template-columns:repeat(4,minmax(0,1fr))}.metric{padding-right:8px}.asic-photo{height:130px}}
-@media(max-width:390px){body{padding-left:11px;padding-right:11px}.head-title{display:none}.panel,form,.settings{padding:14px}.big{font-size:35px}.filters{grid-template-columns:1fr}.asic-photo{height:94px}.asic-card{padding:9px}}
-</style>
-</head>
-<body>
-<main>
-<header>
-  <div class="ttm-mark" aria-label="Логотип TTM"><span></span><span></span><span></span></div>
-  <div class="brand"><div class="brandline">TTM</div><div class="tagline">TO THE MOON</div></div>
-  <div class="head-title"><strong>Калькулятор доходности</strong><span>Bitcoin mining</span></div>
-</header>
+:root{color-scheme:dark;--bg:#101114;--panel:#191a1f;--line:#303139;--tx:#f5f5f6;--mut:#9b9ca6;--orange:#ff8a24;--orange2:#ffad52;--green:#46d39a;--red:#ff626b}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#38200f 0,transparent 40%),var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 16px calc(30px + env(safe-area-inset-bottom));font-variant-numeric:tabular-nums}main{max-width:760px;margin:auto}header{display:flex;align-items:center;gap:12px;padding:22px 0 18px}.ttm-mark{width:46px;height:46px;flex:0 0 46px}.ttm-mark img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%!important}.ttm-mark.avatar-mark{border-radius:50%!important;overflow:hidden!important;background:#000;isolation:isolate}.brandline{font-size:19px;font-weight:850;letter-spacing:1.2px}.tagline{font-size:10px;letter-spacing:2.3px;color:var(--orange);font-weight:800;margin-top:-2px}.head-title{margin-left:auto;text-align:right}.head-title strong{display:block;font-size:14px}.head-title span{color:var(--mut);font-size:11px}h1{font-size:24px;letter-spacing:-.7px;margin:8px 0 5px}.intro{margin:0 0 18px;color:var(--mut);font-size:13px}.panel,form,.settings{background:linear-gradient(145deg,#1c1d23,#17181d);border:1px solid var(--line);border-radius:20px;padding:17px;margin-top:14px}.result-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.eyebrow{font-size:12px;color:var(--mut)}.updated{font-size:11px;color:var(--mut);text-align:right;max-width:48%}.big{font-size:clamp(32px,8vw,46px);font-weight:850;line-height:1.1;letter-spacing:-1.4px;margin:8px 0 14px;overflow-wrap:anywhere}.positive{color:var(--green)}.negative{color:var(--red)}.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}.metric{border-top:1px solid var(--line);padding:12px 0 9px;min-width:0}.metric span{display:block;color:var(--mut);font-size:12px;margin-bottom:4px}.metric b{font-size:16px;overflow-wrap:anywhere}.metric.primary b{color:var(--orange2)}label{display:block;font-size:12px;color:var(--mut);margin:13px 0 6px}label:first-child{margin-top:0}input,select,button{font:inherit}input,select{width:100%;color:var(--tx);background:#111216;border:1px solid var(--line);border-radius:12px;padding:12px;outline:none;min-width:0}input:focus,select:focus{border-color:var(--orange)}.row{display:flex;gap:9px;align-items:stretch}.row>*{flex:1;min-width:0}.currency{display:flex;flex:0 0 auto;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#111216}.currency button{border:0;background:transparent;color:var(--mut);padding:0 13px;font-weight:750}.currency button.active{background:var(--orange);color:#17100a}button{cursor:pointer}.primary-btn{width:100%;border:0;border-radius:13px;background:linear-gradient(100deg,var(--orange),var(--orange2));color:#1b1008;font-weight:850;padding:14px;margin-top:14px}details{margin-top:14px}summary{position:relative;box-sizing:border-box;width:100%;font-size:14px;font-weight:750;line-height:1.4;min-height:24px;padding:0 34px 0 0;margin:0;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:flex-start;gap:10px}summary::-webkit-details-marker{display:none}summary::marker{content:""}summary:after{content:"";position:absolute;right:6px;top:calc(50% - 4px);width:8px;height:8px;border-right:2px solid var(--orange);border-bottom:2px solid var(--orange);transform:rotate(45deg);transform-origin:center;transition:transform .18s ease;pointer-events:none}details[open] summary:after{top:calc(50% - 4px);transform:rotate(225deg)}.details-inner{padding-top:9px}.hint,.note{color:var(--mut);font-size:11px;margin:9px 0 0}.status{font-size:11px;color:var(--mut);margin:12px 1px 0}.status.error{color:var(--red)}.pill{display:inline-block;border:1px solid #49301e;color:var(--orange2);padding:4px 8px;border-radius:20px;font-size:11px;margin-top:7px}.two{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.mutedbox{background:#111216;border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--mut);font-size:11px;margin-top:12px}.note{margin:15px 4px 0}@media(max-width:420px){body{padding-left:11px;padding-right:11px}.panel,form,.settings{padding:14px}.metrics{gap:0 12px}.metric b{font-size:14px}.head-title strong{font-size:12px}}
+.quick-metrics .metric b{font-size:17px}.result-details{margin-top:4px;border-top:1px solid var(--line);padding-top:8px}.result-details .details-inner{padding-top:2px}.result-details .metrics{gap:0 14px}.result-details .metric b{font-size:14px}.panel{padding-bottom:12px}form{margin-top:12px}.primary-btn{margin-top:17px}.settings summary{font-size:14px;min-height:24px;line-height:1.4}.intro{max-width:560px}
+/* Единые аккуратные стрелки без крестов и серых подложек */
+#coinSelect{appearance:none;-webkit-appearance:none;padding-right:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' fill='none' stroke='%239b9ca6' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
+#deviceInput{appearance:none;-webkit-appearance:none;padding-right:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' fill='none' stroke='%239b9ca6' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
+select:not(#coinSelect){appearance:none;-webkit-appearance:none;padding-right:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M2 2l4 4 4-4' fill='none' stroke='%239b9ca6' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;background-size:12px 8px}
+/* Числовые поля: рабочие серые стрелки без подложки */
+input[type="number"]{appearance:textfield;-moz-appearance:textfield;padding-right:30px;background-image:none}
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;appearance:none;margin:0}
+.number-wrap{position:relative;display:block;flex:1;min-width:0;width:100%}
+.number-wrap>input[type="number"]{width:100%;display:block}
+.number-arrows{position:absolute;right:7px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;width:14px;padding:0;margin:0;border:0;background:transparent;box-shadow:none}
+.number-arrows button{display:flex;align-items:center;justify-content:center;width:14px;height:11px;padding:0;margin:0;border:0;border-radius:0;background:transparent!important;box-shadow:none!important;color:#9b9ca6;font-size:9px;line-height:10px;cursor:pointer}
+.number-arrows button:hover,.number-arrows button:focus{color:#f5f5f6;background:transparent!important;outline:none}
+.number-arrows button:disabled{opacity:.35;cursor:default}
+/* Строка «Подробности расчёта»: текст и стрелка на одной центральной линии */
+/* Точное выравнивание строки «Подробности расчёта» и стрелки */
+.result-details summary{position:relative;display:flex;align-items:center;min-height:32px;line-height:20px;padding:0 36px 0 0;margin:0}
+.result-details summary:after{right:8px;top:50%;transform:translateY(-50%) rotate(45deg);transform-origin:center}
+.result-details[open] summary:after{right:8px;top:50%;transform:translateY(-50%) rotate(225deg)}
 
-<div id="calculator" class="calculator">
-  <h1>Калькулятор майнинга</h1>
-  <p class="intro">Рассчитай доходность ASIC при текущих рыночных условиях.</p>
-  <section class="panel" aria-live="polite">
-    <div class="result-top"><span class="eyebrow">Чистая прибыль в сутки</span><div style="display:flex;align-items:center;gap:9px;justify-content:flex-end"><div class="currency" id="outputCurrency"><button type="button" data-value="USD" class="active">$</button><button type="button" data-value="RUB">₽</button></div><span class="updated" id="updated">Загрузка рыночных данных…</span></div></div>
-    <div class="big" id="profit">—</div>
-    <div class="metrics">
-      <div class="metric"><span>Доход от майнинга / день</span><b id="income">—</b></div>
-      <div class="metric"><span>Комиссия пула / день</span><b id="poolCost">—</b></div>
-      <div class="metric"><span>Электричество / день</span><b id="electricCost">—</b></div>
-      <div class="metric"><span>Доп. расходы / день</span><b id="extraCost">—</b></div>
-      <div class="metric"><span>Прибыль в месяц</span><b id="monthProfit">—</b></div>
-      <div class="metric"><span>Прибыль за год</span><b id="yearProfit">—</b></div>
-      <div class="metric"><span>Добыча BTC / день</span><b id="btcDay">—</b></div>
-      <div class="metric"><span>Потребление / день</span><b id="powerDay">—</b></div>
-      <div class="metric"><span>Безубыточный курс BTC</span><b id="breakEven">—</b></div>
-      <div class="metric primary"><span>Окупаемость</span><b id="payback">Укажи цену ASIC</b></div>
-      <div class="metric"><span>Окупаемость стоимости за год</span><b id="recovered">—</b></div>
-    </div>
-  </section>
+/* Статичный премиальный стиль TTM: крупные рабочие стрелки и единые оранжевые акценты */
+.number-arrows{right:5px;width:24px;gap:1px}
+.number-arrows button{width:24px;height:18px;font-size:18px;line-height:18px;font-weight:800;color:#b7bac3;transition:color .15s ease,transform .15s ease}
+.number-arrows button:hover,.number-arrows button:focus-visible{color:var(--orange2);transform:scale(1.08);outline:none}
+.number-arrows button:active{transform:scale(.96)}
+.primary-btn{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(135deg,#ffb45e 0%,#ff962f 38%,#f47718 100%);border:1px solid rgba(255,205,143,.35);box-shadow:0 5px 18px rgba(255,138,36,.2),inset 0 1px 0 rgba(255,255,255,.28);transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
+.primary-btn::before{content:"";position:absolute;inset:1px;border-radius:11px;background:linear-gradient(180deg,rgba(255,255,255,.12),transparent 55%);pointer-events:none}
+.primary-btn:hover{box-shadow:0 7px 22px rgba(255,138,36,.27),inset 0 1px 0 rgba(255,255,255,.3);filter:saturate(1.06);transform:translateY(-1px)}
+.primary-btn:active{transform:translateY(0);box-shadow:0 3px 10px rgba(255,138,36,.16)}
+.primary-btn:disabled{filter:saturate(.7);opacity:.75}
+.currency button.active{background:linear-gradient(135deg,#ffb45e 0%,#ff962f 48%,#f47718 100%);color:#201208;box-shadow:inset 0 1px 0 rgba(255,255,255,.3);border-color:rgba(255,205,143,.3)}
+.currency button{transition:background .15s ease,color .15s ease;}
+.currency button:not(.active):hover{color:var(--orange2)}
 
-  <form id="calcForm">
-    <label>Устройство</label>
-    <button type="button" class="device-select" id="openCatalog">
-      <span class="device-icon">▤</span><span class="device-copy"><b id="selectedName">Antminer S21</b><small id="selectedSpecs">200 TH/s · 3500 W</small></span><span class="arrow">›</span>
-    </button>
-    <div id="customFields" hidden>
-      <div class="row">
-        <div><label for="customTh">Хешрейт, TH/s</label><input id="customTh" type="number" min="0" step="any" value="200"></div>
-        <div><label for="customW">Мощность, Вт</label><input id="customW" type="number" min="0" step="any" value="3500"></div>
-      </div>
-    </div>
 
-    <label for="electricity">Тариф электричества за 1 кВт·ч</label>
-    <div class="row"><input id="electricity" type="number" min="0" step="any" value="5.5"><div class="currency" data-currency="electricity"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD">$</button></div></div>
-    <label for="asicPrice">Стоимость ASIC (необязательно)</label>
-    <div class="row"><input id="asicPrice" type="number" min="0" step="any" placeholder="Например, 250000"><div class="currency" data-currency="asicPrice"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD">$</button></div></div>
-    <button type="button" class="primary-btn" id="refreshBtn">Обновить данные и пересчитать</button>
-    <p class="status" id="status">Подключение к источникам рыночных данных…</p>
-  </form>
+/* Единый статичный градиент TTM для оранжевых акцентов — без переливания и анимации */
+:root{--ttm-orange-gradient:linear-gradient(120deg,#ffd08a 0%,#ffad52 35%,#ff861f 72%,#f56b12 100%)}
+.tagline,
+.metric.primary b,
+.pill,
+.currency button:not(.active):hover{
+  background-image:var(--ttm-orange-gradient);
+  background-clip:text;
+  -webkit-background-clip:text;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+  animation:none!important;
+  transition:none!important;
+}
+/* Градиентная стрелка раскрытия, остаётся неподвижной кроме обычного поворота */
+summary:after{
+  width:9px;height:9px;
+  border:0;
+  background:var(--ttm-orange-gradient);
+  clip-path:polygon(0 0,50% 50%,100% 0,100% 28%,50% 78%,0 28%);
+  transform:rotate(0deg);
+  top:calc(50% - 5px);
+  transition:none!important;
+}
+details[open] summary:after{transform:translateY(-50%) rotate(225deg);top:50%}
+.result-details[open] summary:after{transform:translateY(-50%) rotate(225deg);top:50%}
+/* Оранжевые кнопки и выбранные валюты сохраняют статичный градиент без эффектов переливания */
+.primary-btn,.currency button.active{
+  background-image:var(--ttm-orange-gradient)!important;
+  animation:none!important;
+  transition:none!important;
+}
+.primary-btn:hover,.primary-btn:active{transform:none;filter:none;}
+.currency button{transition:none!important}
 
-  <details class="settings">
-    <summary>Дополнительные настройки</summary>
-    <div class="details-inner">
-      <label for="poolFee">Комиссия пула, %</label><input id="poolFee" type="number" min="0" max="100" step="any" value="2">
-      <label for="extraMonthly">Дополнительные расходы за месяц</label>
-      <div class="row"><input id="extraMonthly" type="number" min="0" step="any" value="0"><div class="currency" data-currency="extraMonthly"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD"> $ </button></div></div>
-      <p class="hint">Можно учесть охлаждение, хостинг и обслуживание. Значение по умолчанию — 0.</p>
-      <label for="uptime">Время работы оборудования, %</label><input id="uptime" type="number" min="1" max="100" step="1" value="100">
-    </div>
-  </details>
-  <details class="settings">
-    <summary>Рыночные данные</summary>
-    <div class="details-inner">
-      <label for="btcPrice">Курс BTC, USD</label><input id="btcPrice" type="number" min="0" step="any" placeholder="Автоматически">
-      <label for="networkHash">Хешрейт сети, EH/s</label><input id="networkHash" type="number" min="0" step="any" placeholder="Автоматически">
-      <label for="usdRub">Курс USD/RUB</label><input id="usdRub" type="number" min="0" step="any" placeholder="Автоматически">
-      <p class="hint">Значения можно изменить вручную. Если автоматический источник недоступен, калькулятор сообщит об этом.</p>
-    </div>
-  </details>
-  <p class="note">Оценка основана на текущем хешрейте сети и награде 3,125 BTC за блок. Фактическая добыча меняется вместе со сложностью сети, временем простоя и условиями пула. Не учтены возможные комиссии вывода, ремонт, охлаждение и хостинг, если их не добавить вручную. Не является гарантией дохода.</p>
-</div>
 
-<section id="catalog" class="catalog">
-  <div class="catalog-head"><button type="button" class="back" id="backBtn">← Назад</button><h2>Выбор ASIC</h2></div>
-  <p class="catalog-sub">Выбери устройство для расчёта. Цены и наличие не отображаются. Характеристики ориентировочные; проверь модификацию перед покупкой.</p>
-  <div class="filters"><input id="searchModel" type="search" placeholder="Поиск модели…" aria-label="Поиск модели"><select id="manufacturer" aria-label="Фильтр производителя"><option value="all">Все производители</option><option value="Bitmain">Bitmain · Antminer</option><option value="MicroBT">MicroBT · WhatsMiner</option><option value="Canaan">Canaan · Avalon</option></select></div>
-  <div class="catalog-grid" id="catalogGrid"></div><div class="empty" id="emptyState">Ничего не найдено. Попробуй изменить поиск.</div>
-</section>
-</main>
-<script>
-(() => {
-  "use strict";
-  const tg = window.Telegram && window.Telegram.WebApp;
-  if (tg) { tg.ready(); tg.expand(); }
+/* Исправление стрелки раскрытия: ровный геометрический шеврон без clip-path */
+summary:after, .result-details summary:after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  left: auto;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 0;
+  border-right: 2px solid var(--orange2);
+  border-bottom: 2px solid var(--orange2);
+  background: none !important;
+  clip-path: none !important;
+  transform: translateY(-70%) rotate(45deg);
+  transform-origin: 50% 50%;
+  transition: none !important;
+  pointer-events: none;
+}
+details[open] > summary:after, .result-details[open] > summary:after {
+  top: 50%;
+  transform: translateY(-30%) rotate(225deg);
+}
+.result-details summary {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  line-height: 20px;
+}
 
-  // Характеристики являются ориентировочными; сверяйте конкретную модификацию перед покупкой.
-  const devices = [
-    {name:"Antminer S21 XP",maker:"Bitmain",th:270,w:3645},
-    {name:"Antminer S21 Pro",maker:"Bitmain",th:234,w:3510},
-    {name:"Antminer S21",maker:"Bitmain",th:200,w:3500},
-    {name:"Antminer S21+",maker:"Bitmain",th:216,w:3564},
-    {name:"Antminer S21 XP Hyd",maker:"Bitmain",th:473,w:5676, cooling:"Гидро"},
-    {name:"Antminer S19k Pro",maker:"Bitmain",th:120,w:2760},
-    {name:"Antminer S19j Pro",maker:"Bitmain",th:100,w:3050},
-    {name:"Antminer S19 XP",maker:"Bitmain",th:140,w:3010},
-    {name:"Antminer S19 Pro",maker:"Bitmain",th:110,w:3250},
-    {name:"Antminer S19",maker:"Bitmain",th:95,w:3250},
-    {name:"Whatsminer M60S",maker:"MicroBT",th:186,w:3441},
-    {name:"Whatsminer M60",maker:"MicroBT",th:172,w:3420},
-    {name:"Whatsminer M50S",maker:"MicroBT",th:126,w:3276},
-    {name:"Whatsminer M50",maker:"MicroBT",th:114,w:3306},
-    {name:"Whatsminer M30S++",maker:"MicroBT",th:112,w:3472},
-    {name:"Avalon A1566",maker:"Canaan",th:185,w:3420},
-    {name:"Avalon A1466",maker:"Canaan",th:150,w:3230},
-    {name:"Avalon A1366",maker:"Canaan",th:130,w:3250}
-  ];
-  const $ = id => document.getElementById(id);
-  const state = {selected:2, currency:{electricity:"RUB",asicPrice:"RUB",extraMonthly:"RUB"}, marketUpdated:null};
-  const REWARD=3.125, BLOCKS_PER_DAY=144;
-  const fmt=(n,d=2)=>Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});
-  const money=(n,c="USD",d=2)=> {
-    if (!Number.isFinite(n)) return "—";
-    const symbol=c==="RUB"?"₽":"$";
-    return (n<0?"−":"")+symbol+fmt(Math.abs(n),d);
-  };
-  const num=id=>{const v=parseFloat(String($(id).value).replace(",","."));return Number.isFinite(v)&&v>=0?v:0;};
-  const toUsd=(amount,currency)=>currency==="RUB"?(num("usdRub")>0?amount/num("usdRub"):NaN):amount;
-  const toDisplay=(usdAmount)=>{
-    if (!Number.isFinite(usdAmount)) return "—";
-    if (state.outputCurrency === "RUB") {
-      const fx = num("usdRub");
-      return fx > 0 ? money(usdAmount * fx, "RUB") : "Нет курса ₽";
-    }
-    return money(usdAmount, "USD");
-  };
-  state.outputCurrency="USD";
-
-  function currentDevice(){return devices[state.selected]||devices[2];}
-  function showDevice(){const d=currentDevice();$("selectedName").textContent=d.name;$("selectedSpecs").textContent=`${d.th} TH/s · ${d.w} W${d.cooling?" · "+d.cooling:""}`;}
-  function renderCatalog(){
-    const grid=$("catalogGrid");grid.innerHTML="";
-    const q=$("searchModel").value.trim().toLowerCase(), maker=$("manufacturer").value;
-    let count=0;
-    devices.forEach((d,index)=>{
-      if((maker==="all"||d.maker===maker)&&d.name.toLowerCase().includes(q)){
-        count++;
-        const card=document.createElement("button");card.type="button";card.className="asic-card"+(index===state.selected?" selected":"");
-        const photo=document.createElement("div");photo.className="asic-photo";
-        const ph=document.createElement("div");ph.className="placeholder";ph.innerHTML='▤<small>ASIC MINER</small>';photo.appendChild(ph);
-        const title=document.createElement("h3");title.textContent=d.name;
-        const brand=document.createElement("div");brand.className="maker";brand.textContent=d.maker;
-        const specs=document.createElement("div");specs.className="specs";
-        specs.innerHTML=`<div><span>Хешрейт</span><b>${d.th} TH/s</b></div><div><span>Мощность</span><b>${d.w.toLocaleString("ru-RU")} W</b></div>`;
-        const pick=document.createElement("span");pick.className="select-label";pick.textContent=index===state.selected?"✓ Выбрано":"Выбрать устройство";
-        card.append(photo,title,brand,specs,pick);
-        card.addEventListener("click",()=>{state.selected=index;showDevice();$("customFields").hidden=true;$("calculator").classList.remove("hidden");$("catalog").classList.remove("visible");calc();window.scrollTo({top:0,behavior:"smooth"});});
-        grid.appendChild(card);
-      }
-    });
-    $("emptyState").style.display=count?"none":"block";
-  }
-  $("openCatalog").addEventListener("click",()=>{$("calculator").classList.add("hidden");$("catalog").classList.add("visible");renderCatalog();window.scrollTo({top:0,behavior:"smooth"});});
-  $("backBtn").addEventListener("click",()=>{$("catalog").classList.remove("visible");$("calculator").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"});});
-  $("searchModel").addEventListener("input",renderCatalog);$("manufacturer").addEventListener("change",renderCatalog);
-
-  $("outputCurrency").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{state.outputCurrency=btn.dataset.value;$("outputCurrency").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b===btn));calc();}));
-
-  document.querySelectorAll(".currency:not(#outputCurrency)").forEach(group=>{
-    group.querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
-      state.currency[group.dataset.currency]=btn.dataset.value;
-      group.querySelectorAll("button").forEach(b=>b.classList.toggle("active",b===btn));
-      calc();
-    }));
-  });
-
-  function calc(){
-    const d=currentDevice();
-    const custom=$("customFields").hidden===false;
-    const th=custom?num("customTh"):d.th, watts=custom?num("customW"):d.w;
-    const btc=num("btcPrice"), net=num("networkHash")*1e18, fx=num("usdRub");
-    const fee=Math.min(100,num("poolFee"))/100, uptime=Math.min(100,Math.max(1,num("uptime")))/100;
-    const powerPrice=toUsd(num("electricity"),state.currency.electricity);
-    const extra=toUsd(num("extraMonthly"),state.currency.extraMonthly);
-    const price=toUsd(num("asicPrice"),state.currency.asicPrice);
-    const dataReady=btc>0&&net>0&&Number.isFinite(powerPrice)&&powerPrice>=0&&Number.isFinite(extra);
-    if(!dataReady){
-      $("profit").textContent="Недостаточно данных";$("profit").className="big";
-      ["income","poolCost","electricCost","extraCost","monthProfit","yearProfit","btcDay","powerDay","breakEven","payback","recovered"].forEach(id=>$(id).textContent="—");
-      return;
-    }
-    const mined=th*1e12/net*BLOCKS_PER_DAY*REWARD*uptime;
-    const gross=mined*btc, pool=gross*fee, electric=watts/1000*24*uptime*powerPrice;
-    const extraDay=extra/30, netProfit=gross-pool-electric-extraDay;
-    const month=netProfit*30, year=netProfit*365;
-    $("profit").textContent=toDisplay(netProfit);$("profit").className="big "+(netProfit>=0?"positive":"negative");
-    $("income").textContent=toDisplay(gross);
-    $("poolCost").textContent=toDisplay(pool);
-    $("electricCost").textContent=toDisplay(electric);
-    $("extraCost").textContent=toDisplay(extraDay);
-    $("monthProfit").textContent=toDisplay(month);$("yearProfit").textContent=toDisplay(year);
-    $("btcDay").textContent=fmt(mined,8)+" BTC";
-    $("powerDay").textContent=fmt(watts/1000*24*uptime,2)+" kWh";
-    const dailyCosts=electric+extraDay;
-    const breakEvenUsd = mined > 0 ? dailyCosts/(mined*(1-fee)) : NaN;
-    $("breakEven").textContent = Number.isFinite(breakEvenUsd)
-      ? (state.outputCurrency === "RUB" && fx > 0 ? money(breakEvenUsd*fx,"RUB",0) : state.outputCurrency === "RUB" ? "Нет курса ₽" : money(breakEvenUsd,"USD",0))
-      : "—";
-    if(!num("asicPrice")){$("payback").textContent="Укажи цену ASIC";$("recovered").textContent="—";}
-    else if(netProfit>0&&Number.isFinite(price)&&price>0){$("payback").textContent=fmt(price/netProfit,0)+" дн. ("+fmt(price/netProfit/30.4375,1)+" мес.)";$("recovered").textContent=fmt(year/price*100,0)+"%";}
-    else{$("payback").textContent="—";$("recovered").textContent="—";}
-  }
-
-  async function loadMarket(){
-    $("status").textContent="Обновляю данные…";
-    $("status").classList.remove("error");
-    $("refreshBtn").disabled=true;
-    const get=async url=>{
-      const r=await fetch(url,{cache:"no-store"});
-      if(!r.ok) throw new Error("HTTP "+r.status);
-      return r.json();
-    };
-    try {
-      const tasks=await Promise.allSettled([
-        get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"),
-        get("https://mempool.space/api/v1/mining/hashrate/3d"),
-        get("https://www.cbr-xml-daily.ru/daily_json.js")
-      ]);
-      let successes=0;
-      if(tasks[0].status==="fulfilled"&&Number(tasks[0].value.bitcoin?.usd)>0){$("btcPrice").value=tasks[0].value.bitcoin.usd;successes++;}
-      if(tasks[1].status==="fulfilled"&&Number(tasks[1].value.currentHashrate)>0){$("networkHash").value=(tasks[1].value.currentHashrate/1e18).toFixed(3);successes++;}
-      if(tasks[2].status==="fulfilled"&&Number(tasks[2].value.Valute?.USD?.Value)>0){$("usdRub").value=tasks[2].value.Valute.USD.Value;successes++;}
-      const now=new Date();state.marketUpdated=now;
-      if(successes===3){
-        $("status").textContent="Все источники обновлены.";
-        $("updated").textContent="Обновлено: "+now.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
-      } else {
-        $("status").textContent=`Не удалось обновить все источники (${successes}/3). Проверь соединение или введи значения вручную.`;
-        $("status").classList.add("error");
-        $("updated").textContent="Данные обновлены частично";
-        document.querySelector('details.settings:last-of-type').open=true;
-      }
-    } catch (error) {
-      $("status").textContent="Ошибка загрузки рыночных данных. Проверь соединение или введи значения вручную.";
-      $("status").classList.add("error");
-      $("updated").textContent="Нет свежих данных";
-      document.querySelector('details.settings:last-of-type').open=true;
-    } finally {
-      $("refreshBtn").disabled=false;
-      calc();
-    }
-  }
-  ["electricity","asicPrice","extraMonthly","poolFee","uptime","customTh","customW","btcPrice","networkHash","usdRub"].forEach(id=>$(id).addEventListener("input",calc));
-  $("refreshBtn").addEventListener("click",loadMarket);
-  showDevice();renderCatalog();calc();loadMarket();
-})();
-</script>
-</body>
-</html>
+</style></head><body><main><header><div class="ttm-mark avatar-mark" aria-label="Аватарка TTM"><img src="data:image/jpeg;base64,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" alt="Аватарка TTM"></div><div class="brand"><div class="brandline">TTM</div><div class="tagline">TO THE MOON</div></div><div class="head-title"><strong>Калькулятор майнинга</strong></div></header>
+<h1>Калькулятор TTM</h1><p class="intro">Выбери монету, ASIC и тариф на электричество. Остальное калькулятор рассчитает сам.</p>
+<section class="panel" aria-live="polite"><div class="result-top"><span class="eyebrow">Чистая прибыль в сутки</span><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end"><div class="currency" id="outputCurrency"><button type="button" data-value="USD" class="active">$</button><button type="button" data-value="RUB">₽</button></div><span class="updated" id="updated">Обновление данных…</span></div></div><div class="big" id="profit">—</div><div class="metrics quick-metrics"><div class="metric"><span>Доход до расходов / день</span><b id="income">—</b></div><div class="metric"><span>Электричество / день</span><b id="electricCost">—</b></div><div class="metric"><span>Прибыль в месяц</span><b id="monthProfit">—</b></div><div class="metric primary"><span>Окупаемость ASIC</span><b id="payback">Укажи цену ASIC</b></div></div><details class="settings result-details"><summary>Подробности расчёта</summary><div class="details-inner"><div class="metrics"><div class="metric"><span>Комиссия пула / день</span><b id="poolCost">—</b></div><div class="metric"><span>Доп. расходы / день</span><b id="extraCost">—</b></div><div class="metric"><span>Прибыль за год</span><b id="yearProfit">—</b></div><div class="metric"><span>Добыча / день</span><b id="coinDay">—</b></div><div class="metric"><span>Потребление / день</span><b id="powerDay">—</b></div><div class="metric"><span>Окупаемость за год</span><b id="recovered">—</b></div></div></div></details><div class="pill" id="algorithmBadge">Алгоритм: SHA-256</div></section>
+<form id="calcForm"><label for="coinSelect">Монета</label><select id="coinSelect"><option value="BTC">Bitcoin (BTC)</option><option value="BCH">Bitcoin Cash (BCH)</option><option value="LTC">Litecoin + Dogecoin (LTC + DOGE)</option><option value="KAS">Kaspa (KAS)</option><option value="ALPH">Alephium (ALPH)</option><option value="ZEC">Zcash (ZEC)</option><option value="ETC">Ethereum Classic (ETC)</option><option value="DASH">Dash (DASH)</option><option value="CKB">Nervos (CKB)</option><option value="ALEO">Aleo (ALEO)</option></select><p class="hint" id="coinHint">Bitcoin добывается на алгоритме SHA-256.</p>
+<label for="deviceInput">ASIC-майнер</label><select id="deviceInput" aria-label="Выбрать ASIC-майнер"></select><p class="hint" id="deviceHint">Выбери модель из списка.</p>
+<div id="customFields" hidden><div class="two"><div><label for="customHash">Хешрейт</label><input id="customHash" type="number" min="0" step="any" value="200"></div><div><label for="customUnit">Единица хешрейта</label><select id="customUnit"><option value="TH">TH/s</option><option value="PH">PH/s</option><option value="GH">GH/s</option><option value="MH">MH/s</option><option value="KSOL">kSol/s</option></select></div><div><label for="customW">Мощность, Вт</label><input id="customW" type="number" min="0" step="any" value="3500"></div></div></div>
+<label for="electricity">Тариф за 1 кВт·ч</label><div class="row"><input id="electricity" type="number" min="0" step="any" value="5.5"><div class="currency" data-currency="electricity"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD">$</button></div></div>
+<label for="asicPrice">Стоимость ASIC (необязательно)</label><div class="row"><input id="asicPrice" type="number" min="0" step="any" placeholder="Например, 250000"><div class="currency" data-currency="asicPrice"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD">$</button></div></div>
+<button type="button" class="primary-btn" id="refreshBtn">Пересчитать</button><p class="status" id="status">Загружаю цены монет и курс валют…</p></form>
+<details class="settings"><summary>Дополнительные настройки (необязательно)</summary><div class="details-inner"><label for="grossRevenue">Ручная корректировка дохода в день, USD (необязательно)</label><input id="grossRevenue" type="number" min="0" step="any" placeholder="Оставь пустым для автоматического расчёта"><p class="hint">Обычно это поле не требуется. Заполняй его только если хочешь заменить автоматическую оценку собственными данными.</p><label for="poolFee">Комиссия пула, %</label><input id="poolFee" type="number" min="0" max="100" step="any" value="2"><label for="extraMonthly">Дополнительные расходы за месяц</label><div class="row"><input id="extraMonthly" type="number" min="0" step="any" value="0"><div class="currency" data-currency="extraMonthly"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD">$</button></div></div><label for="uptime">Время работы оборудования, %</label><input id="uptime" type="number" min="1" max="100" step="1" value="100"></div></details>
+<details class="settings"><summary>Рыночные данные</summary><div class="details-inner"><label for="coinPrice">Цена выбранной монеты, USD</label><input id="coinPrice" type="number" min="0" step="any" placeholder="Автоматически"><label for="usdRub">Курс USD/RUB</label><input id="usdRub" type="number" min="0" step="any" placeholder="Автоматически"><label for="networkHash">Хешрейт сети, H/s</label><input id="networkHash" type="text" readonly placeholder="Загружается автоматически"><p class="hint" id="networkHashHint">Значение обновляется автоматически из сетевого источника, если он предоставляет этот показатель.</p><p class="hint">Цена монеты и курс USD/RUB также загружаются автоматически из внешних источников.</p></div></details>
+<p class="note">Расчёт является ориентировочной оценкой, а не гарантией дохода. Сетевые награды, сложность, комиссии, цена монеты и доступность пулов меняются. Характеристики устройств ориентировочные — проверяй точную модификацию и режим работы перед покупкой.</p>
+</main><script>
+(()=>{'use strict';const tg=window.Telegram&&window.Telegram.WebApp;if(tg){tg.ready();tg.expand()}const $=id=>document.getElementById(id);
+const coins={
+ BTC:{name:'Bitcoin',algo:'SHA-256',cg:'bitcoin',unit:'TH',hint:'Алгоритм SHA-256. Расчёт доходности по сети Bitcoin.'},
+ BCH:{name:'Bitcoin Cash',algo:'SHA-256',cg:'bitcoin-cash',unit:'TH',hint:'Алгоритм SHA-256. Используются показатели сети Bitcoin Cash.'},
+ LTC:{name:'Litecoin + Dogecoin',algo:'Scrypt',cg:'litecoin',unit:'GH',hint:'Алгоритм Scrypt. Учтён совместный майнинг Litecoin и Dogecoin.'},
+ KAS:{name:'Kaspa',algo:'kHeavyHash',cg:'kaspa',unit:'TH',hint:'Kaspa использует kHeavyHash. Для достоверного дохода требуется актуальная доходность сети или пула.'},
+ ALPH:{name:'Alephium',algo:'Blake3',cg:'alephium',unit:'TH',hint:'Alephium использует Blake3. Проверяй актуальную поддержку монеты и алгоритма конкретной прошивкой ASIC.'},
+ ZEC:{name:'Zcash',algo:'Equihash',cg:'zcash',unit:'KSOL',hint:'Zcash использует Equihash. Хешрейт обычно указывается в Sol/s или kSol/s.'},
+ ETC:{name:'Ethereum Classic',algo:'Etchash',cg:'ethereum-classic',unit:'GH',hint:'Ethereum Classic использует Etchash. Некоторые устройства относятся к Ethash/Etchash — проверяй совместимость.'},
+ DASH:{name:'Dash',algo:'X11',cg:'dash',unit:'TH',hint:'Dash использует X11.'},
+ CKB:{name:'Nervos',algo:'Eaglesong',cg:'nervos-network',unit:'TH',hint:'Nervos CKB использует Eaglesong.'},
+ ALEO:{name:'Aleo',algo:'zkSNARK',cg:'aleo',unit:'MH',hint:'Aleo поддерживает специализированные устройства zkSNARK; характеристики и доходность зависят от модели и протокола пула.'}
+};
+// База совместимых устройств. Значения — ориентировочные номинальные характеристики, а не live-показатели доходности.
+const devices=[
+// SHA-256
+['Antminer S23 Hyd 3U','Bitmain','BTC,BCH','1160','PH',11020],['Antminer S23 Hyd','Bitmain','BTC,BCH','580','TH',5510],['Antminer S23','Bitmain','BTC,BCH','318','TH',3498],['Antminer S23e Hyd 2U','Bitmain','BTC,BCH','865','TH',8650],['SealMiner A4 Ultra Hydro','Bitdeer','BTC,BCH','886','TH',8372],['SealMiner A4 Pro Hydro','Bitdeer','BTC,BCH','680','TH',7412],['SealMiner A4 Pro Air','Bitdeer','BTC,BCH','336','TH',3662],['Antminer S21 XP','Bitmain','BTC,BCH','270','TH',3645],['Antminer S21 Pro','Bitmain','BTC,BCH','234','TH',3510],['Antminer S21','Bitmain','BTC,BCH','200','TH',3500],['Antminer S21+','Bitmain','BTC,BCH','216','TH',3564],['Antminer S21 XP Hyd','Bitmain','BTC,BCH','473','TH',5676],['Antminer S21 Hyd','Bitmain','BTC,BCH','335','TH',5360],['Antminer S21+ Hyd','Bitmain','BTC,BCH','395','TH',5925],['Antminer T21','Bitmain','BTC,BCH','190','TH',3610],['Antminer S19 XP','Bitmain','BTC,BCH','140','TH',3010],['Antminer S19k Pro','Bitmain','BTC,BCH','120','TH',2760],['Antminer S19j Pro+','Bitmain','BTC,BCH','120','TH',3300],['Antminer S19 Pro','Bitmain','BTC,BCH','110','TH',3250],['Antminer S19','Bitmain','BTC,BCH','95','TH',3250],['Whatsminer M66S','MicroBT','BTC,BCH','298','TH',5513],['Whatsminer M60S','MicroBT','BTC,BCH','186','TH',3441],['Whatsminer M60','MicroBT','BTC,BCH','172','TH',3420],['Whatsminer M50S','MicroBT','BTC,BCH','126','TH',3276],['Whatsminer M50','MicroBT','BTC,BCH','114','TH',3306],['Whatsminer M30S++','MicroBT','BTC,BCH','112','TH',3472],['Avalon A1566','Canaan','BTC,BCH','185','TH',3420],['Avalon A1466','Canaan','BTC,BCH','150','TH',3230],
+// Scrypt LTC + DOGE
+['Antminer L11 Hyd 2U','Bitmain','LTC','35','GH',5775],['Antminer L11 Hyd 6U','Bitmain','LTC','33','GH',5676],['Antminer L11 Pro','Bitmain','LTC','21','GH',3612],['Antminer L9','Bitmain','LTC','16','GH',3360],['Antminer L7','Bitmain','LTC','9.5','GH',3425],['SealMiner DL1 Hydro','Bitdeer','LTC','52.5','GH',7823],['SealMiner DL1 Air','Bitdeer','LTC','25','GH',3725],['Elphapex DG1+','Elphapex','LTC','14','GH',3920],['Elphapex DG1','Elphapex','LTC','11','GH',3420],['Goldshell LT6','Goldshell','LTC','3.35','GH',3200],
+// kHeavyHash
+['Antminer KS7','Bitmain','KAS','30','TH',3500],['IceRiver KS5L','IceRiver','KAS','12','TH',3400],['IceRiver KS5M','IceRiver','KAS','15','TH',3400],['IceRiver KS5','IceRiver','KAS','20','TH',3000],['IceRiver KS3M','IceRiver','KAS','6','TH',3400],['Goldshell KA BOX Pro','Goldshell','KAS','1.6','TH',600],
+// Blake3
+['Antminer AL1 Pro','Bitmain','ALPH','16.6','TH',3730],['Antminer AL1','Bitmain','ALPH','15.6','TH',3510],['IceRiver AL3','IceRiver','ALPH','15','TH',3500],['IceRiver AL2','IceRiver','ALPH','7','TH',2800],
+// Equihash
+['Antminer Z15 Pro','Bitmain','ZEC','840','KSOL',2780],['Antminer Z15','Bitmain','ZEC','420','KSOL',1510],['Antminer Z15K','Bitmain','ZEC','800','KSOL',2800],['Innosilicon A9++ ZMaster','Innosilicon','ZEC','140','KSOL',1550],
+// Etchash
+['Jasminer X44-P','Jasminer','ETC','23.4','GH',2550],['Jasminer X16-Q','Jasminer','ETC','1.95','GH',620],['iPollo V2','iPollo','ETC','10','GH',1500],['Jasminer X4-1U','Jasminer','ETC','520','MH',240],
+// X11
+['Antminer D9','Bitmain','DASH','1770','GH',2839],['Antminer D7','Bitmain','DASH','1286','GH',3148],['iBeLink DM22G','iBeLink','DASH','22','GH',1650],
+// Eaglesong
+['Antminer K7','Bitmain','CKB','63.5','TH',3080],['iBeLink BM-K1 Max','iBeLink','CKB','16','TH',1350],
+// Aleo zkSNARK
+['IceRiver AE3','IceRiver','ALEO','2','MH',3400],['IceRiver AE2','IceRiver','ALEO','720','KH',1900]
+].map(x=>({name:x[0],maker:x[1],coins:x[2].split(','),hash:Number(x[3]),unit:x[4],w:x[5]}));
+const state={selected:null,output:'USD',currency:{electricity:'RUB',asicPrice:'RUB',extraMonthly:'RUB'},prices:{},fx:0,networkCoins:[],btcUsd:0,btcNetwork:null,networkUpdated:null};const fmt=(n,d=2)=>Number(n).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});const money=(n,c=state.output,d=2)=>!Number.isFinite(n)?'—':(n<0?'−':'')+(c==='RUB'?'₽':'$')+fmt(Math.abs(n),d);const num=id=>{let n=parseFloat(String($(id).value).replace(',','.'));return Number.isFinite(n)&&n>=0?n:0};const toUsd=(v,c)=>{if(v===0)return 0;return c==='RUB'?(state.fx>0?v/state.fx:NaN):v};const display=v=>state.output==='RUB'?(state.fx>0?money(v*state.fx,'RUB'):'Нет курса ₽'):money(v,'USD');
+function coin(){return coins[$('coinSelect').value]}function compatible(){return devices.filter(d=>d.coins.includes($('coinSelect').value))}function current(){return state.selected||compatible().find(d=>d.name===$('deviceInput').value)||null}function unitName(u){return ({TH:'TH/s',PH:'PH/s',GH:'GH/s',MH:'MH/s',KSOL:'kSol/s',KH:'kH/s'})[u]||u}
+function fillDevices(keep=true){const old=$('deviceInput').value;const list=compatible();$('deviceInput').innerHTML=list.map(d=>`<option value="${d.name}">${d.name}</option>`).join('')+'<option value="__custom__">Своя модель — ввести параметры</option>';let chosen=keep?list.find(d=>d.name===old):null;if(!chosen)chosen=list[0]||null;state.selected=chosen||null;$('deviceInput').value=chosen?chosen.name:'__custom__';$('customFields').hidden=!!chosen;if(chosen){$('deviceHint').textContent=`${chosen.maker} · ${fmt(chosen.hash,chosen.hash%1?1:0)} ${unitName(chosen.unit)} · ${chosen.w.toLocaleString('ru-RU')} Вт`;}else{$('deviceHint').textContent='Своя модель: укажи хешрейт и мощность ниже.';$('customFields').hidden=false}calc()}
+$('coinSelect').addEventListener('change',()=>{const c=coin();$('coinPrice').value=state.prices[$('coinSelect').value]||'';$('coinHint').textContent=c.hint;$('algorithmBadge').textContent='Алгоритм: '+c.algo;$('customUnit').innerHTML=({TH:'<option value="TH">TH/s</option><option value="PH">PH/s</option><option value="GH">GH/s</option><option value="MH">MH/s</option><option value="KSOL">kSol/s</option><option value="KH">kH/s</option>',GH:'<option value="GH">GH/s</option><option value="TH">TH/s</option><option value="MH">MH/s</option><option value="KH">kH/s</option>',KSOL:'<option value="KSOL">kSol/s</option><option value="MH">MSol/s</option>'})[c.unit]||'<option value="MH">MH/s</option><option value="GH">GH/s</option><option value="TH">TH/s</option>';fillDevices(false);updateNetworkDisplay($('coinSelect').value);loadMarket()});
+$('deviceInput').addEventListener('change',()=>{const found=compatible().find(d=>d.name===$('deviceInput').value);state.selected=found||null;$('customFields').hidden=!!found;if(found)$('deviceHint').textContent=`${found.maker} · ${fmt(found.hash,found.hash%1?1:0)} ${unitName(found.unit)} · ${found.w.toLocaleString('ru-RU')} Вт`;else $('deviceHint').textContent='Своя модель: укажи хешрейт и мощность ниже.';calc()});
+$('outputCurrency').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{state.output=b.dataset.value;$('outputCurrency').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));calc()}));document.querySelectorAll('.currency:not(#outputCurrency)').forEach(g=>g.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{state.currency[g.dataset.currency]=b.dataset.value;g.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));calc()})));
+function hashToH(d){const u=d.unit;const h=d.hash;if(u==='PH')return h*1e15;if(u==='TH')return h*1e12;if(u==='GH')return h*1e9;if(u==='MH')return h*1e6;if(u==='KH')return h*1e3;if(u==='KSOL')return h*1e3;return h}function customDevice(){let unit=$('customUnit').value;return {hash:num('customHash'),unit,w:num('customW'),coins:[$('coinSelect').value],name:'Своя модель'}}
+function clearIncomeResults(message='Нет данных дохода'){ $('profit').textContent=message;$('profit').className='big';['income','poolCost','electricCost','extraCost','monthProfit','yearProfit','coinDay','recovered'].forEach(id=>$(id).textContent='—');$('payback').textContent=num('asicPrice')?'—':'Укажи цену ASIC';const watts=state.selected?state.selected.w:num('customW');const uptime=Math.min(100,Math.max(1,num('uptime')))/100;$('powerDay').textContent=fmt(watts/1000*24*uptime,2)+' kWh'}
+function calc(){const d=current()||customDevice();const custom=!state.selected;const watts=custom?num('customW'):d.w;const h=custom?hashToH({hash:num('customHash'),unit:$('customUnit').value}):hashToH(d);const fee=Math.min(100,num('poolFee'))/100,uptime=Math.min(100,Math.max(1,num('uptime')))/100;const electricity=toUsd(num('electricity'),state.currency.electricity),extra=toUsd(num('extraMonthly'),state.currency.extraMonthly);const grossManual=num('grossRevenue');const selectedTag=$('coinSelect').value;const liveEstimate=estimateRevenue(selectedTag,h);const live=liveEstimate?liveEstimate.usd:null;const revenue=grossManual>0?grossManual:live;updateNetworkDisplay(selectedTag);if(!(h>0&&watts>0)){clearIncomeResults('Укажи хешрейт и мощность ASIC');return}const ready=Number.isFinite(electricity)&&Number.isFinite(extra)&&watts>=0;if(!ready){clearIncomeResults('Проверь курс валют');return}if(!(Number.isFinite(revenue)&&revenue>=0)){clearIncomeResults('Нет данных дохода');return}const gross=revenue*uptime,pool=gross*fee,electric=watts/1000*24*uptime*electricity,extraDay=extra/30,net=gross-pool-electric-extraDay,month=net*30,year=net*365;$('profit').textContent=display(net);$('profit').className='big '+(net>=0?'positive':'negative');$('income').textContent=display(gross);$('poolCost').textContent=display(pool);$('electricCost').textContent=display(electric);$('extraCost').textContent=display(extraDay);$('monthProfit').textContent=display(month);$('yearProfit').textContent=display(year);const coinPrice=Number($('coinPrice').value)||state.prices[selectedTag]||0;$('coinDay').textContent=liveEstimate&&grossManual===0?('≈ '+fmt(liveEstimate.coins,6)+' '+(selectedTag==='LTC'?'LTC / день (DOGE дополнительно)':selectedTag+' / день')):'—';$('powerDay').textContent=fmt(watts/1000*24*uptime,2)+' kWh';
+ const priceUsd=toUsd(num('asicPrice'),state.currency.asicPrice);if(num('asicPrice')>0&&net>0&&priceUsd>0){$('payback').textContent=fmt(priceUsd/net,0)+' дн. ('+fmt(priceUsd/net/30.4375,1)+' мес.)';$('recovered').textContent=fmt(year/priceUsd*100,0)+'%'}else{$('payback').textContent=num('asicPrice')?'—':'Укажи цену ASIC';$('recovered').textContent='—'}}
+function findNetwork(tag){
+ if(tag==='BTC'&&state.btcNetwork)return state.btcNetwork;
+ const aliases={BTC:['BTC','BITCOIN'],BCH:['BCH','BCC','BITCOIN CASH'],LTC:['LTC','LITECOIN'],DOGE:['DOGE','DOGECOIN'],KAS:['KAS','KASPA'],ALPH:['ALPH','ALEPHIUM'],ZEC:['ZEC','ZCASH'],ETC:['ETC','ETHEREUM CLASSIC'],DASH:['DASH'],CKB:['CKB','NERVOS'],ALEO:['ALEO']};
+ const wanted=aliases[tag]||[tag];
+ return state.networkCoins.find(x=>wanted.includes(String(x.tag||x.symbol||x.ticker||'').toUpperCase())||wanted.some(a=>String(x.name||'').toUpperCase()===a||String(x.name||'').toUpperCase().startsWith(a+' ')||String(x.name||'').toUpperCase().endsWith(' '+a))||wanted.includes(String(x.coin||'').toUpperCase()))||null;
+}
+function parseMetric(v){
+ if(typeof v==='number')return v;
+ if(v===null||v===undefined)return NaN;
+ const s=String(v).trim().replace(/,/g,'');const m=s.match(/^([+-]?(?:\d+\.?\d*|\.\d+))\s*([kKmMgGtTpPeE])?$/);
+ if(!m)return Number(s);
+ const pow=({k:1,K:1,m:1,M:2,g:3,G:3,t:4,T:4,p:5,P:5,e:6,E:6})[m[2]];
+ // Uppercase M means mega; lowercase m is also accepted as mega for API shorthand.
+ return Number(m[1])*(m[2]?(m[2]==='k'||m[2]==='K'?1e3:m[2]==='m'||m[2]==='M'?1e6:m[2]==='g'||m[2]==='G'?1e9:m[2]==='t'||m[2]==='T'?1e12:m[2]==='p'||m[2]==='P'?1e15:1e18):1);
+}
+function formatHashrate(value){
+ if(!(Number(value)>0))return 'Нет данных';
+ const units=[['EH/s',1e18],['PH/s',1e15],['TH/s',1e12],['GH/s',1e9],['MH/s',1e6],['kH/s',1e3],['H/s',1]];
+ const unit=units.find(([,factor])=>value>=factor)||units[units.length-1];
+ const digits=value/unit[1]>=100?0:value/unit[1]>=10?1:2;
+ return (value/unit[1]).toLocaleString('ru-RU',{maximumFractionDigits:digits})+' '+unit[0];
+}
+function normalizeCoinRecord(raw,tag,name){
+ if(!raw||typeof raw!=='object')return null;
+ const pick=(...keys)=>{for(const key of keys){if(raw[key]!==undefined&&raw[key]!==null&&raw[key]!=='')return raw[key]}return undefined};
+ const record={...raw,tag:tag||pick('tag','symbol','ticker'),name:name||pick('name','Name','coin'),algorithm:pick('algorithm','Algorithm','algo'),nethash:pick('nethash','Nethash','network_hashrate','networkHashrate','hashrate','networkHashrateHs','avgHashrate'),difficulty:pick('difficulty','Difficulty'),block_time:pick('block_time','blockTime','block_time_s','Block time','blocktime'),block_reward:pick('block_reward','blockReward','reward','Bl. reward','Bl. reward 24h'),exchange_rate:pick('exchange_rate','btc_exchange_rate','price_btc','priceInBtc')};
+ if(!record.nethash&&record.difficulty&&record.block_time&&(['BTC','BCH'].includes(tag)||/sha.?256/i.test(String(record.algorithm))))record.nethash=parseMetric(record.difficulty)*4294967296/parseMetric(record.block_time);
+ return record;
+}
+function updateNetworkDisplay(tag){
+ const c=findNetwork(tag);let net=c?parseMetric(c.nethash??c.network_hashrate??c.networkHashrate??c.hashrate??c.avgHashrate):NaN;
+ const blockTime=c?parseMetric(c.block_time??c.blocktime??c.blockTime):NaN;
+ const diff=c?parseMetric(c.difficulty):NaN;
+ const algo=String(c?.algorithm||c?.algo||coin().algo).toLowerCase();
+ // Difficulty-to-hashrate conversion is only used for SHA-256 networks, where the usual 2^32 work factor applies.
+ if(!(net>0)&&diff>0&&blockTime>0&&(algo.includes('sha-256')||algo.includes('sha256')||['BTC','BCH'].includes(tag)))net=diff*4294967296/blockTime;
+ if(net>0){$('networkHash').value=formatHashrate(net);$('networkHash').dataset.raw=String(net);$('networkHashHint').textContent='Источник: '+(c?.source||'сетевые данные')+' · '+(c?.name||c?.tag||tag)+'. Хешрейт сети — оценка, обновляется автоматически.';}
+ else{$('networkHash').value='Нет данных';delete $('networkHash').dataset.raw;$('networkHashHint').textContent='Источник пока не предоставил хешрейт для этой сети; доход не рассчитывается по выдуманным значениям.';}
+}
+function estimateCoinDaily(tag,hashH){
+ const c=findNetwork(tag);if(!c)return null;
+ let net=parseMetric(c.nethash??c.network_hashrate??c.networkHashrate??c.hashrate??c.avgHashrate);
+ const blockTime=parseMetric(c.block_time??c.blocktime??c.blockTime??c.block_time_s??c.avgBlockTime);
+ let reward=parseMetric(c.block_reward24??c.block_reward??c.reward??c.blockReward??c.reward24);
+ const priceBtc=parseMetric(c.exchange_rate??c.price_btc??c.priceInBtc??c.btc_exchange_rate);
+ const marketPrice=Number(state.prices[tag]||0);
+ const priceUsd=marketPrice>0?marketPrice:(tag==='BTC'?state.btcUsd:(priceBtc>0&&state.btcUsd>0?priceBtc*state.btcUsd:parseMetric(c.price_usd??c.priceUsd)));
+ const algo=String(c.algorithm||c.algo||coin().algo).toLowerCase();
+ if(!(net>0)&&blockTime>0){const diff=parseMetric(c.difficulty);if(diff>0&&(algo.includes('sha-256')||algo.includes('sha256')||['BTC','BCH'].includes(tag)))net=diff*4294967296/blockTime;}
+ // Bitcoin is not always listed in the profitability API. Use live network hashrate from mempool.space;
+ // block subsidy is 3.125 BTC after the 2024 halving. Transaction fees are excluded, so this is conservative.
+ if(tag==='BTC'&&net>0&&priceUsd>0&&hashH>0){
+   const dailyCoins=(hashH/net)*(86400/600)*3.125;
+   const usd=dailyCoins*priceUsd;
+   return Number.isFinite(usd)?{usd,coins:dailyCoins,price:priceUsd,raw:c,networkHash:net}:null;
+ }
+ if(!(net>0&&blockTime>0&&reward>0&&priceUsd>0&&hashH>0))return null;
+ const dailyCoins=(hashH/net)*(86400/blockTime)*reward;
+ const usd=dailyCoins*priceUsd;
+ if(!Number.isFinite(usd)||usd<0)return null;
+ return {usd,coins:dailyCoins,price:priceUsd,raw:c,networkHash:net};
+}
+function estimateRevenue(tag,hashH){
+ if(!(hashH>0))return null;
+ if(tag==='LTC'){const l=estimateCoinDaily('LTC',hashH),d=estimateCoinDaily('DOGE',hashH);return l&&d?{usd:l.usd+d.usd,coins:l.coins,networkHash:l.networkHash,raw:l.raw}:null;}
+ const x=estimateCoinDaily(tag,hashH);return x?{...x}:null;
+}
+async function loadMarket(){const c=coin();$('status').textContent='Обновляю цены, сетевые показатели и курс валют…';$('status').classList.remove('error');$('refreshBtn').disabled=true;const ids=[...new Set(Object.values(coins).map(x=>x.cg).concat(['bitcoin','dogecoin']))].join(',');try{const results=await Promise.allSettled([
+fetch('https://api.coingecko.com/api/v3/simple/price?ids='+encodeURIComponent(ids)+'&vs_currencies=usd',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('CoinGecko '+r.status);return r.json()}),
+fetch('https://coincalculators.io/api/coins.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('CoinCalculators '+r.status);return r.json()}).catch(()=>fetch('https://coincalculators.io/api/proxy.php',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('WhatToMine mirror '+r.status);return r.json()})),
+fetch('https://www.cbr-xml-daily.ru/daily_json.js',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('CBR '+r.status);return r.json()}).catch(()=>fetch('https://open.er-api.com/v6/latest/USD',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('FX fallback '+r.status);return r.json()})),
+fetch('https://mempool.space/api/v1/mining/hashrate/1m',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Mempool hashrate '+r.status);return r.json()}),fetch('https://backpow.com/coins-data/'+encodeURIComponent(({BTC:'Bitcoin',BCH:'BitcoinCash',LTC:'Litecoin',DOGE:'Dogecoin',KAS:'Kaspa',ALPH:'Alephium',ZEC:'Zcash',ETC:'EthereumClassic',DASH:'Dash',CKB:'Nervos',ALEO:'Aleo'})[$('coinSelect').value]||coins[$('coinSelect').value].name)+'.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('BackPoW '+r.status);return r.json()}),fetch('https://mempool.space/api/v1/prices',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Mempool prices '+r.status);return r.json()})]);let ok=0;
+if(results[0].status==='fulfilled'){const prices=results[0].value;for(const [ticker,meta] of Object.entries(coins)){const val=prices[meta.cg]?.usd;if(Number(val)>0)state.prices[ticker]=Number(val)}state.btcUsd=Number(prices.bitcoin?.usd)||state.prices.BTC||0;if(Number(prices.dogecoin?.usd)>0)state.prices.DOGE=Number(prices.dogecoin.usd);if(state.prices[$('coinSelect').value])$('coinPrice').value=state.prices[$('coinSelect').value];ok++}
+if(results[1].status==='fulfilled'){const data=results[1].value;state.networkCoins=Array.isArray(data)?data:(Array.isArray(data.coins)?data.coins:(data.coins&&typeof data.coins==='object'?Object.entries(data.coins).map(([name,value])=>({name,...value})):Array.isArray(data.data)?data.data:[]));if(state.networkCoins.length){state.networkCoins=state.networkCoins.map(x=>normalizeCoinRecord(x,x.tag||x.symbol||x.ticker,x.name));state.networkUpdated=new Date();ok++}}
+if(results[4].status==='fulfilled'){const tag=$('coinSelect').value;const raw=results[4].value;const rec=normalizeCoinRecord(raw,tag,coins[tag].name);if(rec&&parseMetric(rec.nethash)>0){rec.source='BackPoW';if(tag==='BTC')state.btcNetwork=rec;state.networkCoins=state.networkCoins.filter(x=>String(x.tag||'').toUpperCase()!==tag);state.networkCoins.push(rec);ok++}}
+if(results[3].status==='fulfilled'){const payload=results[3].value;const series=Array.isArray(payload.hashrates)?payload.hashrates:[];const latest=[...series].reverse().find(x=>Number(x.avgHashrate)>0);const currentHash=Number(payload.currentHashrate)>0?Number(payload.currentHashrate):Number(latest?.avgHashrate);if(currentHash>0){state.btcNetwork={tag:'BTC',name:'Bitcoin',algorithm:'SHA-256',nethash:currentHash,block_time:600,block_reward:3.125,source:'Mempool.space'};ok++}}
+if(results[2].status==='fulfilled'){const fx=Number(results[2].value.Valute?.USD?.Value||results[2].value.rates?.RUB);if(fx>0){state.fx=fx;$('usdRub').value=state.fx;ok++}}if(!(state.fx>0)&&num('usdRub')>0)state.fx=num('usdRub');
+if(results[5].status==='fulfilled'&&!(state.btcUsd>0)){const p=results[5].value;const btcUsd=Number(p.USD||p.usd||p.USD?.price);if(btcUsd>0){state.btcUsd=btcUsd;state.prices.BTC=btcUsd;if($('coinSelect').value==='BTC')$('coinPrice').value=btcUsd;ok++}}if(num('coinPrice')>0)state.prices[$('coinSelect').value]=num('coinPrice');
+updateNetworkDisplay($('coinSelect').value);const est=estimateRevenue($('coinSelect').value,(current()?hashToH(current()):hashToH(customDevice())));const matched=findNetwork($('coinSelect').value);if(est!==null&&num('grossRevenue')===0){$('status').textContent='Автоматическая оценка рассчитана по полученным данным. Фактический доход может отличаться.'}else if(est===null){$('status').textContent=matched?'Для выбранной монеты источник не предоставил все показатели (хешрейт, награду, время блока или цену).':'Не удалось получить хешрейт сети выбранной монеты. Проверь соединение и повтори обновление.';$('status').classList.add('error')}else{$('status').textContent='Данные обновлены. Используется ручная корректировка дохода.'}
+$('updated').textContent='Обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});if(ok<2)$('status').classList.add('error');
+}catch(e){if(num('usdRub')>0)state.fx=num('usdRub');$('status').textContent='Не удалось загрузить все рыночные данные. Можно ввести доход и значения вручную.';$('status').classList.add('error');$('updated').textContent='Нет свежих данных'}finally{$('refreshBtn').disabled=false;calc()}}
+// Add functional, unboxed up/down controls to number inputs.
+function installNumberArrows(){
+ document.querySelectorAll('input[type="number"]').forEach(input=>{
+  if(input.closest('.number-wrap')) return;
+  const wrap=document.createElement('span');wrap.className='number-wrap';
+  input.parentNode.insertBefore(wrap,input);wrap.appendChild(input);
+  const controls=document.createElement('span');controls.className='number-arrows';controls.setAttribute('aria-label','Изменить значение');
+  const up=document.createElement('button');up.type='button';up.innerHTML='&#9652;';up.setAttribute('aria-label','Увеличить');
+  const down=document.createElement('button');down.type='button';down.innerHTML='&#9662;';down.setAttribute('aria-label','Уменьшить');
+  function change(dir){if(input.disabled||input.readOnly)return;const step=input.step==='any'?1:(Number(input.step)||1);const current=input.value===''?(Number(input.min)||0):Number(input.value);let next=current+dir*step;const min=input.min!==''?Number(input.min):-Infinity;const max=input.max!==''?Number(input.max):Infinity;next=Math.min(max,Math.max(min,next));const decimals=(String(step).split('.')[1]||'').length;input.value=String(Number(next.toFixed(Math.min(8,decimals+2))));input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));}
+  up.addEventListener('click',()=>change(1));down.addEventListener('click',()=>change(-1));controls.append(up,down);wrap.appendChild(controls);
+ });
+}
+installNumberArrows();
+['electricity','asicPrice','extraMonthly','poolFee','uptime','customHash','customW','grossRevenue','coinPrice','usdRub','networkHash'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='usdRub'&&num(id)>0)state.fx=num(id);if(id==='coinPrice'&&num(id)>0)state.prices[$('coinSelect').value]=num(id);calc()}));$('refreshBtn').addEventListener('click',loadMarket);$('coinHint').textContent=coin().hint;$('algorithmBadge').textContent='Алгоритм: '+coin().algo;fillDevices(false);updateNetworkDisplay($('coinSelect').value);loadMarket();
+})();</script></body></html>
