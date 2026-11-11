@@ -159,7 +159,7 @@ $('deviceInput').addEventListener('change',()=>{const found=compatible().find(d=
 $('outputCurrency').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{state.output=b.dataset.value;$('outputCurrency').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));calc()}));document.querySelectorAll('.currency:not(#outputCurrency)').forEach(g=>g.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{state.currency[g.dataset.currency]=b.dataset.value;g.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));calc()})));
 function hashToH(d){const u=d.unit;const h=d.hash;if(u==='PH')return h*1e15;if(u==='TH')return h*1e12;if(u==='GH')return h*1e9;if(u==='MH')return h*1e6;if(u==='KH')return h*1e3;if(u==='KSOL')return h*1e3;return h}function customDevice(){let unit=$('customUnit').value;return {hash:num('customHash'),unit,w:num('customW'),coins:[$('coinSelect').value],name:'Своя модель'}}
 function clearIncomeResults(message='Нет данных дохода'){ $('profit').textContent=message;$('profit').className='big';['income','poolCost','electricCost','extraCost','monthProfit','yearProfit','coinDay','recovered'].forEach(id=>$(id).textContent='—');$('payback').textContent=num('asicPrice')?'—':'Укажи цену ASIC';const watts=state.selected?state.selected.w:num('customW');const uptime=Math.min(100,Math.max(1,num('uptime')))/100;$('powerDay').textContent=fmt(watts/1000*24*uptime,2)+' kWh'}
-function calc(){const d=current()||customDevice();const custom=!state.selected;const watts=custom?num('customW'):d.w;const h=custom?hashToH({hash:num('customHash'),unit:$('customUnit').value}):hashToH(d);const fee=Math.min(100,num('poolFee'))/100,uptime=Math.min(100,Math.max(1,num('uptime')))/100;const electricity=toUsd(num('electricity'),state.currency.electricity),extra=toUsd(num('extraMonthly'),state.currency.extraMonthly);const grossManual=num('grossRevenue');const selectedTag=$('coinSelect').value;const liveEstimate=estimateRevenue(selectedTag,h);const live=liveEstimate?liveEstimate.usd:null;const revenue=grossManual>0?grossManual:live;updateNetworkDisplay(selectedTag);if(!(h>0&&watts>0)){clearIncomeResults('Укажи хешрейт и мощность ASIC');return}const ready=Number.isFinite(electricity)&&Number.isFinite(extra)&&watts>=0;if(!ready){clearIncomeResults('Проверь курс валют');return}if(!(Number.isFinite(revenue)&&revenue>=0)){clearIncomeResults('Нет данных дохода');return}const gross=revenue*uptime,pool=gross*fee,electric=watts/1000*24*uptime*electricity,extraDay=extra/30,net=gross-pool-electric-extraDay,month=net*30,year=net*365;$('profit').textContent=display(net);$('profit').className='big '+(net>=0?'positive':'negative');$('income').textContent=display(gross);$('poolCost').textContent=display(pool);$('electricCost').textContent=display(electric);$('extraCost').textContent=display(extraDay);$('monthProfit').textContent=display(month);$('yearProfit').textContent=display(year);const coinPrice=Number($('coinPrice').value)||state.prices[selectedTag]||0;$('coinDay').textContent=liveEstimate&&grossManual===0?(selectedTag==='LTC'?'≈ '+fmt(liveEstimate.coins,6)+' LTC + '+fmt(liveEstimate.dogeCoins,2)+' DOGE / день':'≈ '+fmt(liveEstimate.coins,6)+' '+selectedTag+' / день'):'—';$('powerDay').textContent=fmt(watts/1000*24*uptime,2)+' kWh';
+function calc(){const d=current()||customDevice();const custom=!state.selected;const watts=custom?num('customW'):d.w;const h=custom?hashToH({hash:num('customHash'),unit:$('customUnit').value}):hashToH(d);const fee=Math.min(100,num('poolFee'))/100,uptime=Math.min(100,Math.max(1,num('uptime')))/100;const electricity=toUsd(num('electricity'),state.currency.electricity),extra=toUsd(num('extraMonthly'),state.currency.extraMonthly);const grossManual=num('grossRevenue');const selectedTag=$('coinSelect').value;const liveEstimate=estimateRevenue(selectedTag,h);const live=liveEstimate?liveEstimate.usd:null;const revenue=grossManual>0?grossManual:live;updateNetworkDisplay(selectedTag);if(!(h>0&&watts>0)){clearIncomeResults('Укажи хешрейт и мощность ASIC');return}const ready=Number.isFinite(electricity)&&Number.isFinite(extra)&&watts>=0;if(!ready){clearIncomeResults('Проверь курс валют');return}if(!(Number.isFinite(revenue)&&revenue>=0)){clearIncomeResults('Нет данных дохода');return}const gross=revenue*uptime,pool=gross*fee,electric=watts/1000*24*uptime*electricity,extraDay=extra/30,net=gross-pool-electric-extraDay,month=net*30,year=net*365;$('profit').textContent=display(net);$('profit').className='big '+(net>=0?'positive':'negative');$('income').textContent=display(gross);$('poolCost').textContent=display(pool);$('electricCost').textContent=display(electric);$('extraCost').textContent=display(extraDay);$('monthProfit').textContent=display(month);$('yearProfit').textContent=display(year);const coinPrice=Number($('coinPrice').value)||state.prices[selectedTag]||0;$('coinDay').textContent=liveEstimate&&grossManual===0?(selectedTag==='LTC'?'≈ '+(liveEstimate.components.LTC?fmt(liveEstimate.coins,6)+' LTC':'— LTC')+' + '+(liveEstimate.components.DOGE?fmt(liveEstimate.dogeCoins,2)+' DOGE':'— DOGE')+' / день':'≈ '+fmt(liveEstimate.coins,6)+' '+selectedTag+' / день'):'—';$('powerDay').textContent=fmt(watts/1000*24*uptime,2)+' kWh';
  const priceUsd=toUsd(num('asicPrice'),state.currency.asicPrice);if(num('asicPrice')>0&&net>0&&priceUsd>0){$('payback').textContent=fmt(priceUsd/net,0)+' дн. ('+fmt(priceUsd/net/30.4375,1)+' мес.)';$('recovered').textContent=fmt(year/priceUsd*100,0)+'%'}else{$('payback').textContent=num('asicPrice')?'—':'Укажи цену ASIC';$('recovered').textContent='—'}}
 function findNetwork(tag){
  if(tag==='BTC'&&state.btcNetwork)return state.btcNetwork;
@@ -282,7 +282,17 @@ function estimateRevenue(tag,hashH){
  if(!(hashH>0))return null;
  if(tag==='LTC'){
   const l=estimateCoinDaily('LTC',hashH),d=estimateCoinDaily('DOGE',hashH);
-  return l&&d?{usd:l.usd+d.usd,coins:l.coins,dogeCoins:d.coins,networkHash:l.networkHash,raw:l.raw,components:{LTC:l,DOGE:d}}:null;
+  if(!l&&!d)return null;
+  return {
+   usd:(l?.usd||0)+(d?.usd||0),
+   coins:l?.coins||0,
+   dogeCoins:d?.coins||0,
+   networkHash:l?.networkHash||d?.networkHash||NaN,
+   raw:l?.raw||d?.raw||null,
+   components:{LTC:l,DOGE:d},
+   incomplete:!l||!d,
+   missing:!l?(!d?['LTC','DOGE']:['LTC']):(!d?['DOGE']:[])
+  };
  }
  const x=estimateCoinDaily(tag,hashH);return x?{...x}:null;
 }
@@ -373,6 +383,9 @@ async function loadMarket(){
   const matched=findNetwork(selectedTag);
   if(num('grossRevenue')>0){
    $('status').textContent=estimate?'Используется ручная корректировка дохода вместо автоматической оценки.':'Используется ручная корректировка дохода; автоматическая оценка сейчас недоступна.';
+  }else if(estimate?.incomplete){
+   $('status').textContent='Частичная оценка LTC + DOGE: нет данных по '+estimate.missing.join(' и ')+'. Показан доход только по доступной сети.';
+   $('status').classList.add('error');
   }else if(estimate){
    $('status').textContent='Автоматическая оценка рассчитана по полученным сетевым данным. Фактический доход может отличаться.';
   }else{
