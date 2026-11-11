@@ -115,7 +115,7 @@ details[open] > summary:after, .result-details[open] > summary:after {
 <button type="button" class="primary-btn" id="refreshBtn">Пересчитать</button><p class="status" id="status">Загружаю цены монет и курс валют…</p></form>
 <details class="settings"><summary>Дополнительные настройки (необязательно)</summary><div class="details-inner"><label for="grossRevenue">Ручная корректировка дохода в день, USD (необязательно)</label><input id="grossRevenue" type="number" min="0" step="any" placeholder="Оставь пустым для автоматического расчёта"><p class="hint">Обычно это поле не требуется. Заполняй его только если хочешь заменить автоматическую оценку собственными данными.</p><label for="poolFee">Комиссия пула, %</label><input id="poolFee" type="number" min="0" max="100" step="any" value="2"><label for="extraMonthly">Дополнительные расходы за месяц</label><div class="row"><input id="extraMonthly" type="number" min="0" step="any" value="0"><div class="currency" data-currency="extraMonthly"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD">$</button></div></div><label for="uptime">Время работы оборудования, %</label><input id="uptime" type="number" min="1" max="100" step="1" value="100"></div></details>
 <details class="settings"><summary>Рыночные данные</summary><div class="details-inner"><label for="coinPrice">Цена выбранной монеты, USD</label><input id="coinPrice" type="number" min="0" step="any" placeholder="Автоматически"><label for="usdRub">Курс USD/RUB</label><input id="usdRub" type="number" min="0" step="any" placeholder="Автоматически"><label for="networkHash">Хешрейт сети, H/s</label><input id="networkHash" type="text" readonly placeholder="Загружается автоматически"><p class="hint" id="networkHashHint">Значение обновляется автоматически из сетевого источника, если он предоставляет этот показатель.</p><p class="hint">Цена монеты и курс USD/RUB также загружаются автоматически из внешних источников.</p></div></details>
-<p class="note">Расчёт является ориентировочной оценкой, а не гарантией дохода. Сетевые награды, сложность, комиссии, цена монеты и доступность пулов меняются. Сетевые показатели берутся из CoinCalculators и BackPoW (обновление BackPoW — ежедневно). Характеристики устройств ориентировочные — проверяй точную модификацию и режим работы перед покупкой.</p>
+<p class="note">Расчёт является ориентировочной оценкой, а не гарантией дохода. Сетевые награды, сложность, комиссии, цена монеты и доступность пулов меняются. Сетевые показатели берутся из <a href="https://coincalculators.io/api/" target="_blank" rel="noopener">CoinCalculators</a> (примерно каждые 5 минут) и <a href="https://backpow.com/api" target="_blank" rel="noopener">BackPoW</a> (ежедневно). Для CKB показана только базовая эмиссия; для ALEO требуется ручной доход пула. Характеристики устройств ориентировочные — проверяй точную модификацию и режим работы перед покупкой.</p>
 </main><script>
 (()=>{'use strict';const tg=window.Telegram&&window.Telegram.WebApp;if(tg){tg.ready();tg.expand()}const $=id=>document.getElementById(id);
 const coins={
@@ -244,8 +244,7 @@ function updateNetworkDisplay(tag){
 }
 function estimateUnsupportedReason(tag){
  const reasons={
-  CKB:'Для Nervos CKB нужно учитывать базовую, вторичную, proposal- и commit-награды. Доступных полей недостаточно для точной оценки.',
-  ALEO:'Aleo использует prover/zkSNARK-награды, а не обычную пропорцию хешрейта сети. Автоматическая оценка отключена до получения данных по proof target.'
+  ALEO:'Aleo использует prover/zkSNARK-награды, а не обычную пропорцию хешрейта сети. Автоматическая оценка отключена до получения данных по proof target. Для расчёта укажи суточный доход пула в дополнительных настройках.'
  };
  return reasons[tag]||'';
 }
@@ -260,6 +259,18 @@ function estimateCoinDaily(tag,hashH){
  const marketPrice=Number(state.prices[tag]||0);
  const priceUsd=marketPrice>0?marketPrice:(tag==='BTC'?state.btcUsd:(priceBtc>0&&state.btcUsd>0?priceBtc*state.btcUsd:parseMetric(c.price_usd??c.priceUsd)));
  const algo=String(c.algorithm||c.algo||coins[tag]?.algo||'').toLowerCase();
+ // CKB: conservative base-issuance-only estimate. It excludes secondary issuance
+ // (whose miner share depends on state occupancy) and proposal/commit transaction fees.
+ if(tag==='CKB'){
+  const halvings=[Date.UTC(2023,10,19),Date.UTC(2027,10,19),Date.UTC(2031,10,19),Date.UTC(2035,10,19),Date.UTC(2039,10,19),Date.UTC(2043,10,19),Date.UTC(2047,10,19),Date.UTC(2051,10,19)];
+  const halvingCount=halvings.filter(date=>Date.now()>=date).length;
+  const baseCoinsPerDay=11506848/Math.pow(2,halvingCount);
+  if(!(net>0&&priceUsd>0&&hashH>0))return null;
+  const dailyCoins=(hashH/net)*baseCoinsPerDay;
+  const usd=dailyCoins*priceUsd;
+  if(!Number.isFinite(usd)||usd<0)return null;
+  return {usd,coins:dailyCoins,price:priceUsd,raw:c,networkHash:net,incomplete:true,components:{baseIssuance:dailyCoins}};
+ }
  if(!(net>0)&&blockTime>0){
   const diff=parseMetric(c.difficulty);
   if(diff>0&&(algo.includes('sha-256')||algo.includes('sha256')||['BTC','BCH'].includes(tag)))net=diff*4294967296/blockTime;
@@ -383,8 +394,11 @@ async function loadMarket(){
   const matched=findNetwork(selectedTag);
   if(num('grossRevenue')>0){
    $('status').textContent=estimate?'Используется ручная корректировка дохода вместо автоматической оценки.':'Используется ручная корректировка дохода; автоматическая оценка сейчас недоступна.';
-  }else if(estimate?.incomplete){
+  }else if(estimate?.incomplete&&selectedTag==='LTC'){
    $('status').textContent='Частичная оценка LTC + DOGE: нет данных по '+estimate.missing.join(' и ')+'. Показан доход только по доступной сети.';
+   $('status').classList.add('error');
+  }else if(estimate?.incomplete&&selectedTag==='CKB'){
+   $('status').textContent='Осторожная оценка CKB: учтена только базовая эмиссия для майнеров. Вторичная эмиссия и комиссии транзакций не включены.';
    $('status').classList.add('error');
   }else if(estimate){
    $('status').textContent='Автоматическая оценка рассчитана по полученным сетевым данным. Фактический доход может отличаться.';
