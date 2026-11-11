@@ -3,16 +3,16 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const html = fs.readFileSync('index.html', 'utf8');
-const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)]
+const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
   .map(m => m[1]).filter(s => s.trim());
 assert.ok(scripts.length, 'Inline calculator script exists');
 const script = scripts.at(-1);
 new vm.Script(script, { filename: 'index.html:inline-script' });
 
-const ids = [...html.matchAll(/\\bid="([^"]+)"/g)].map(m => m[1]);
+const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 const idSet = new Set(ids);
 assert.equal(idSet.size, ids.length, 'HTML element IDs must be unique');
-const missing = [...new Set([...script.matchAll(/\\$\\('([^']+)'\\)/g)].map(m => m[1]))]
+const missing = [...new Set([...script.matchAll(/\$\('([^']+)'\)/g)].map(m => m[1]))]
   .filter(id => !idSet.has(id));
 assert.deepEqual(missing, [], 'Every hard-coded DOM selector must exist');
 
@@ -20,10 +20,10 @@ const coinStart = script.indexOf('const coins={');
 const coinEnd = script.indexOf('};', coinStart);
 assert.ok(coinStart >= 0 && coinEnd > coinStart, 'Coin table exists');
 const coinBlock = script.slice(coinStart, coinEnd);
-const coinTags = [...coinBlock.matchAll(/^\\s*([A-Z]{2,5}):/gm)].map(m => m[1]);
+const coinTags = [...coinBlock.matchAll(/^\s*([A-Z]{2,5}):/gm)].map(m => m[1]);
 assert.deepEqual(coinTags, ['BTC','BCH','LTC','KAS','ALPH','ZEC','ETC','DASH','CKB','ALEO']);
 
-const deviceRows = [...script.matchAll(/\\['[^']+','[^']+','[^']+','[^']+','[^']+',\\d+\\]/g)];
+const deviceRows = [...script.matchAll(/\['[^']+','[^']+','[^']+','[^']+','[^']+',\d+\]/g)];
 assert.ok(deviceRows.length >= 65, `Expected broad ASIC catalogue, found ${deviceRows.length}`);
 for (const model of ['Antminer S23 Hyd 3U','Antminer S21 Pro','Antminer Z15 K','IceRiver KS7 Lite','IceRiver AL2 Lite','IceRiver AE3']) {
   assert.ok(script.includes(model), `Missing ASIC model: ${model}`);
