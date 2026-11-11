@@ -115,7 +115,7 @@ details[open] > summary:after, .result-details[open] > summary:after {
 <button type="button" class="primary-btn" id="refreshBtn">Пересчитать</button><p class="status" id="status">Загружаю цены монет и курс валют…</p></form>
 <details class="settings"><summary>Дополнительные настройки (необязательно)</summary><div class="details-inner"><label for="grossRevenue">Ручная корректировка дохода в день, USD (необязательно)</label><input id="grossRevenue" type="number" min="0" step="any" placeholder="Оставь пустым для автоматического расчёта"><p class="hint">Обычно это поле не требуется. Заполняй его только если хочешь заменить автоматическую оценку собственными данными.</p><label for="poolFee">Комиссия пула, %</label><input id="poolFee" type="number" min="0" max="100" step="any" value="2"><label for="extraMonthly">Дополнительные расходы за месяц</label><div class="row"><input id="extraMonthly" type="number" min="0" step="any" value="0"><div class="currency" data-currency="extraMonthly"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD">$</button></div></div><label for="uptime">Время работы оборудования, %</label><input id="uptime" type="number" min="1" max="100" step="1" value="100"></div></details>
 <details class="settings"><summary>Рыночные данные</summary><div class="details-inner"><label for="coinPrice">Цена выбранной монеты, USD</label><input id="coinPrice" type="number" min="0" step="any" placeholder="Автоматически"><label for="usdRub">Курс USD/RUB</label><input id="usdRub" type="number" min="0" step="any" placeholder="Автоматически"><label for="networkHash">Хешрейт сети, H/s</label><input id="networkHash" type="text" readonly placeholder="Загружается автоматически"><p class="hint" id="networkHashHint">Значение обновляется автоматически из сетевого источника, если он предоставляет этот показатель.</p><p class="hint">Цена монеты и курс USD/RUB также загружаются автоматически из внешних источников.</p></div></details>
-<p class="note">Расчёт является ориентировочной оценкой, а не гарантией дохода. Сетевые награды, сложность, комиссии, цена монеты и доступность пулов меняются. Характеристики устройств ориентировочные — проверяй точную модификацию и режим работы перед покупкой.</p>
+<p class="note">Расчёт является ориентировочной оценкой, а не гарантией дохода. Сетевые награды, сложность, комиссии, цена монеты и доступность пулов меняются. Сетевые показатели берутся из CoinCalculators и BackPoW (обновление BackPoW — ежедневно). Характеристики устройств ориентировочные — проверяй точную модификацию и режим работы перед покупкой.</p>
 </main><script>
 (()=>{'use strict';const tg=window.Telegram&&window.Telegram.WebApp;if(tg){tg.ready();tg.expand()}const $=id=>document.getElementById(id);
 const coins={
@@ -137,11 +137,11 @@ const devices=[
 // Scrypt LTC + DOGE
 ['Antminer L11 Hyd 2U','Bitmain','LTC','35','GH',5775],['Antminer L11 Hyd 6U','Bitmain','LTC','33','GH',5676],['Antminer L11 Pro','Bitmain','LTC','21','GH',3612],['Antminer L9','Bitmain','LTC','16','GH',3360],['Antminer L7','Bitmain','LTC','9.5','GH',3425],['SealMiner DL1 Hydro','Bitdeer','LTC','52.5','GH',7823],['SealMiner DL1 Air','Bitdeer','LTC','25','GH',3725],['Elphapex DG1+','Elphapex','LTC','14','GH',3920],['Elphapex DG1','Elphapex','LTC','11','GH',3420],['Goldshell LT6','Goldshell','LTC','3.35','GH',3200],
 // kHeavyHash
-['Antminer KS7','Bitmain','KAS','40','TH',3080],['IceRiver KS5L','IceRiver','KAS','12','TH',3400],['IceRiver KS5M','IceRiver','KAS','15','TH',3400],['IceRiver KS5','IceRiver','KAS','20','TH',3000],['IceRiver KS3M','IceRiver','KAS','6','TH',3400],['Goldshell KA BOX Pro','Goldshell','KAS','1.6','TH',600],
+['Antminer KS7','Bitmain','KAS','40','TH',3080],['IceRiver KS7','IceRiver','KAS','30','TH',3500],['IceRiver KS7 Lite','IceRiver','KAS','4.2','TH',500],['IceRiver KS5L','IceRiver','KAS','12','TH',3400],['IceRiver KS5M','IceRiver','KAS','15','TH',3400],['IceRiver KS5','IceRiver','KAS','20','TH',3000],['IceRiver KS3M','IceRiver','KAS','6','TH',3400],['Goldshell KA BOX Pro','Goldshell','KAS','1.6','TH',600],
 // Blake3
-['Antminer AL1 Pro','Bitmain','ALPH','16.6','TH',3730],['Antminer AL1','Bitmain','ALPH','15.6','TH',3510],['IceRiver AL3','IceRiver','ALPH','15','TH',3500],['IceRiver AL2','IceRiver','ALPH','7','TH',2800],
+['Antminer AL1 Pro','Bitmain','ALPH','16.6','TH',3730],['Antminer AL1','Bitmain','ALPH','15.6','TH',3510],['IceRiver AL3','IceRiver','ALPH','15','TH',3500],['IceRiver AL2 Lite','IceRiver','ALPH','2','TH',500],['IceRiver AL0','IceRiver','ALPH','400','GH',100],
 // Equihash
-['Antminer Z15 Pro','Bitmain','ZEC','840','KSOL',2780],['Antminer Z15','Bitmain','ZEC','420','KSOL',1510],['Antminer Z15K','Bitmain','ZEC','800','KSOL',2800],['Innosilicon A9++ ZMaster','Innosilicon','ZEC','140','KSOL',1550],
+['Antminer Z15 Pro','Bitmain','ZEC','840','KSOL',2780],['Antminer Z15','Bitmain','ZEC','420','KSOL',1510],['Antminer Z15 K','Bitmain','ZEC','525','KSOL',2483],['Innosilicon A9++ ZMaster','Innosilicon','ZEC','140','KSOL',1550],
 // Etchash
 ['Jasminer X44-P','Jasminer','ETC','23.4','GH',2550],['Jasminer X16-Q','Jasminer','ETC','1.95','GH',620],['iPollo V2','iPollo','ETC','10','GH',1500],['Jasminer X4-1U','Jasminer','ETC','520','MH',240],
 // X11
@@ -149,7 +149,7 @@ const devices=[
 // Eaglesong
 ['Antminer K7','Bitmain','CKB','63.5','TH',3080],['iBeLink BM-K1 Max','iBeLink','CKB','16','TH',1350],
 // Aleo zkSNARK
-['IceRiver AE3','IceRiver','ALEO','2','GH',3400],['IceRiver AE2','IceRiver','ALEO','720','MH',1300]
+['IceRiver AE3','IceRiver','ALEO','2','GH',3400],['IceRiver AE2','IceRiver','ALEO','720','MH',1300],['IceRiver AE1 Lite','IceRiver','ALEO','300','MH',500],['IceRiver AE0','IceRiver','ALEO','60','MH',100]
 ].map(x=>({name:x[0],maker:x[1],coins:x[2].split(','),hash:Number(x[3]),unit:x[4],w:x[5]}));
 const state={selected:null,output:'USD',currency:{electricity:'RUB',asicPrice:'RUB',extraMonthly:'RUB'},prices:{},fx:0,networkCoins:[],btcUsd:0,btcNetwork:null,networkUpdated:null,marketRequestId:0};const fmt=(n,d=2)=>Number(n).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});const money=(n,c=state.output,d=2)=>!Number.isFinite(n)?'—':(n<0?'−':'')+(c==='RUB'?'₽':'$')+fmt(Math.abs(n),d);const num=id=>{let n=parseFloat(String($(id).value).replace(',','.'));return Number.isFinite(n)&&n>=0?n:0};const toUsd=(v,c)=>{if(v===0)return 0;return c==='RUB'?(state.fx>0?v/state.fx:NaN):v};const display=v=>state.output==='RUB'?(state.fx>0?money(v*state.fx,'RUB'):'Нет курса ₽'):money(v,'USD');
 function coin(){return coins[$('coinSelect').value]}function compatible(){return devices.filter(d=>d.coins.includes($('coinSelect').value))}function current(){return state.selected||compatible().find(d=>d.name===$('deviceInput').value)||null}function unitName(u){return ({TH:'TH/s',PH:'PH/s',GH:'GH/s',MH:'MH/s',KSOL:'kSol/s',KH:'kH/s'})[u]||u}
@@ -239,12 +239,11 @@ function updateNetworkDisplay(tag){
  const algo=String(c?.algorithm||c?.algo||coins[tag]?.algo||'').toLowerCase();
  // Difficulty-to-hashrate conversion is only used for SHA-256 networks, where the usual 2^32 work factor applies.
  if(!(net>0)&&diff>0&&blockTime>0&&(algo.includes('sha-256')||algo.includes('sha256')||['BTC','BCH'].includes(tag)))net=diff*4294967296/blockTime;
- if(net>0){$('networkHash').value=formatHashrate(net);$('networkHash').dataset.raw=String(net);$('networkHashHint').textContent='Источник: '+(c?.source||'сетевые данные')+' · '+(c?.name||c?.tag||tag)+'. Хешрейт сети — оценка, обновляется автоматически.';}
+ if(net>0){$('networkHash').value=formatHashrate(net);$('networkHash').dataset.raw=String(net);$('networkHashHint').textContent='Источник: '+(c?.source||'сетевые данные')+' · '+(c?.name||c?.tag||tag)+'. Хешрейт сети — оценка, обновляется автоматически. Данные BackPoW обновляются ежедневно.';}
  else{$('networkHash').value='Нет данных';delete $('networkHash').dataset.raw;$('networkHashHint').textContent='Источник пока не предоставил хешрейт для этой сети; доход не рассчитывается по выдуманным значениям.';}
 }
 function estimateUnsupportedReason(tag){
  const reasons={
-  ALPH:'Для Alephium требуется учитывать 16 цепочек и динамическую PoLW-награду. Пока источник не подтверждает эти параметры, автоматическая доходность отключена.',
   CKB:'Для Nervos CKB нужно учитывать базовую, вторичную, proposal- и commit-награды. Доступных полей недостаточно для точной оценки.',
   ALEO:'Aleo использует prover/zkSNARK-награды, а не обычную пропорцию хешрейта сети. Автоматическая оценка отключена до получения данных по proof target.'
  };
@@ -273,7 +272,8 @@ function estimateCoinDaily(tag,hashH){
  const minerShare=tag==='DASH'?0.20:(tag==='ZEC'?0.80:1);
  const minerReward=effectiveReward*minerShare;
  if(!(net>0&&effectiveBlockTime>0&&minerReward>0&&priceUsd>0&&hashH>0))return null;
- const dailyCoins=(hashH/net)*(86400/effectiveBlockTime)*minerReward;
+ const chainBlockMultiplier=tag==='ALPH'?16:1;
+ const dailyCoins=(hashH/net)*(86400/effectiveBlockTime)*minerReward*chainBlockMultiplier;
  const usd=dailyCoins*priceUsd;
  if(!Number.isFinite(usd)||usd<0||!Number.isFinite(dailyCoins))return null;
  return {usd,coins:dailyCoins,price:priceUsd,raw:c,networkHash:net,blockTime:effectiveBlockTime,reward:minerReward};
