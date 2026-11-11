@@ -242,7 +242,17 @@ function updateNetworkDisplay(tag){
  if(net>0){$('networkHash').value=formatHashrate(net);$('networkHash').dataset.raw=String(net);$('networkHashHint').textContent='Источник: '+(c?.source||'сетевые данные')+' · '+(c?.name||c?.tag||tag)+'. Хешрейт сети — оценка, обновляется автоматически.';}
  else{$('networkHash').value='Нет данных';delete $('networkHash').dataset.raw;$('networkHashHint').textContent='Источник пока не предоставил хешрейт для этой сети; доход не рассчитывается по выдуманным значениям.';}
 }
+function estimateUnsupportedReason(tag){
+ const reasons={
+  ALPH:'Для Alephium требуется учитывать 16 цепочек и динамическую PoLW-награду. Пока источник не подтверждает эти параметры, автоматическая доходность отключена.',
+  CKB:'Для Nervos CKB нужно учитывать базовую, вторичную, proposal- и commit-награды. Доступных полей недостаточно для точной оценки.',
+  ALEO:'Aleo использует prover/zkSNARK-награды, а не обычную пропорцию хешрейта сети. Автоматическая оценка отключена до получения данных по proof target.'
+ };
+ return reasons[tag]||'';
+}
 function estimateCoinDaily(tag,hashH){
+ // Эти сети нельзя надёжно оценить простой формулой H/s × награда за блок.
+ if(estimateUnsupportedReason(tag))return null;
  const c=findNetwork(tag);if(!c)return null;
  let net=parseMetric(c.nethash??c.network_hashrate??c.networkHashrate??c.hashrate??c.avgHashrate);
  const blockTime=parseSeconds(c.block_time??c.blocktime??c.blockTime??c.block_time_s??c.avgBlockTime);
@@ -258,11 +268,15 @@ function estimateCoinDaily(tag,hashH){
  // BTC uses the live network hashrate and current per-block subsidy; transaction fees are excluded.
  const effectiveBlockTime=blockTime>0?blockTime:(tag==='BTC'?600:NaN);
  const effectiveReward=reward>0?reward:(tag==='BTC'?3.125:NaN);
- if(!(net>0&&effectiveBlockTime>0&&effectiveReward>0&&priceUsd>0&&hashH>0))return null;
- const dailyCoins=(hashH/net)*(86400/effectiveBlockTime)*effectiveReward;
+ // BackPoW's block reward is the whole block subsidy. Apply the protocol miner share
+ // for coins where the subsidy is split between miners and other recipients.
+ const minerShare=tag==='DASH'?0.20:(tag==='ZEC'?0.80:1);
+ const minerReward=effectiveReward*minerShare;
+ if(!(net>0&&effectiveBlockTime>0&&minerReward>0&&priceUsd>0&&hashH>0))return null;
+ const dailyCoins=(hashH/net)*(86400/effectiveBlockTime)*minerReward;
  const usd=dailyCoins*priceUsd;
  if(!Number.isFinite(usd)||usd<0||!Number.isFinite(dailyCoins))return null;
- return {usd,coins:dailyCoins,price:priceUsd,raw:c,networkHash:net,blockTime:effectiveBlockTime,reward:effectiveReward};
+ return {usd,coins:dailyCoins,price:priceUsd,raw:c,networkHash:net,blockTime:effectiveBlockTime,reward:minerReward};
 }
 function estimateRevenue(tag,hashH){
  if(!(hashH>0))return null;
@@ -362,7 +376,8 @@ async function loadMarket(){
   }else if(estimate){
    $('status').textContent='Автоматическая оценка рассчитана по полученным сетевым данным. Фактический доход может отличаться.';
   }else{
-   $('status').textContent=matched?'Источник не предоставил все показатели для надёжной оценки дохода.':'Не удалось получить сетевые данные выбранной монеты. Проверь соединение и повтори обновление.';
+   const unsupported=estimateUnsupportedReason(selectedTag);
+   $('status').textContent=unsupported|| (matched?'Источник не предоставил все показатели для надёжной оценки дохода.':'Не удалось получить сетевые данные выбранной монеты. Проверь соединение и повтори обновление.');
    $('status').classList.add('error');
   }
   $('updated').textContent='Обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
