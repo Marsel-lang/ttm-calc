@@ -274,7 +274,9 @@ function estimateCoinDaily(tag,hashH){
  const effectiveReward=reward>0?reward:(tag==='BTC'?3.125:NaN);
  // BackPoW's block reward is the whole block subsidy. Apply the protocol miner share
  // for coins where the subsidy is split between miners and other recipients.
- const protocolShare=tag==='DASH'?0.20:(tag==='ZEC'?0.80:1);
+ const fallbackMinerShare=tag==='DASH'?0.20:(tag==='ZEC'?0.80:1);
+ const declaredMinerShare=Number(c.emission?.minerShare);
+ const protocolShare=Number.isFinite(declaredMinerShare)&&declaredMinerShare>0&&declaredMinerShare<=1?declaredMinerShare:fallbackMinerShare;
  const rewardBasis=String(c.emission?.oracleRewardBasis||'').toLowerCase();
  // BackPoW explicitly labels whether its reward field is the full subsidy or the miner payout.
  // DASH and ZEC must not have their miner share applied twice; without a declared basis, fail closed.
