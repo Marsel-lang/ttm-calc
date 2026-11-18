@@ -151,7 +151,7 @@ const devices=[
 // Aleo zkSNARK
 ['IceRiver AE3','IceRiver','ALEO','2','GH',3400],['IceRiver AE2','IceRiver','ALEO','720','MH',1300],['IceRiver AE1 Lite','IceRiver','ALEO','300','MH',500],['IceRiver AE0','IceRiver','ALEO','60','MH',100]
 ].map(x=>({name:x[0],maker:x[1],coins:x[2].split(','),hash:Number(x[3]),unit:x[4],w:x[5]}));
-const state={selected:null,output:'USD',currency:{electricity:'RUB',asicPrice:'RUB',extraMonthly:'RUB'},prices:{},fx:0,networkCoins:[],btcUsd:0,btcNetwork:null,networkUpdated:null,networkFetchedAt:{},networkDataSource:{},priceUpdatedAt:0,priceSource:'',fxUpdatedAt:0,marketRequestId:0};const fmt=(n,d=2)=>Number(n).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});const money=(n,c=state.output,d=2)=>!Number.isFinite(n)?'—':(n<0?'−':'')+(c==='RUB'?'₽':'$')+fmt(Math.abs(n),d);const num=id=>{let n=parseFloat(String($(id).value).replace(',','.'));return Number.isFinite(n)&&n>=0?n:0};const toUsd=(v,c)=>{if(v===0)return 0;return c==='RUB'?(state.fx>0?v/state.fx:NaN):v};const display=v=>state.output==='RUB'?(state.fx>0?money(v*state.fx,'RUB'):'Нет курса ₽'):money(v,'USD');
+const state={selected:null,output:'USD',currency:{electricity:'RUB',asicPrice:'RUB',extraMonthly:'RUB'},prices:{},fx:0,networkCoins:[],btcUsd:0,btcNetwork:null,networkUpdated:null,networkFetchedAt:{},networkDataSource:{},priceFetchedAt:{},priceDataSource:{},fxUpdatedAt:0,marketRequestId:0};const fmt=(n,d=2)=>Number(n).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});const money=(n,c=state.output,d=2)=>!Number.isFinite(n)?'—':(n<0?'−':'')+(c==='RUB'?'₽':'$')+fmt(Math.abs(n),d);const num=id=>{let n=parseFloat(String($(id).value).replace(',','.'));return Number.isFinite(n)&&n>=0?n:0};const toUsd=(v,c)=>{if(v===0)return 0;return c==='RUB'?(state.fx>0?v/state.fx:NaN):v};const display=v=>state.output==='RUB'?(state.fx>0?money(v*state.fx,'RUB'):'Нет курса ₽'):money(v,'USD');
 function coin(){return coins[$('coinSelect').value]}function compatible(){return devices.filter(d=>d.coins.includes($('coinSelect').value))}function current(){return state.selected||compatible().find(d=>d.name===$('deviceInput').value)||null}function unitName(u){return ({TH:'TH/s',PH:'PH/s',GH:'GH/s',MH:'MH/s',KSOL:'kSol/s',KH:'kH/s'})[u]||u}
 function fillDevices(keep=true){const old=$('deviceInput').value;const list=compatible();$('deviceInput').innerHTML=list.map(d=>`<option value="${d.name}">${d.name}</option>`).join('')+'<option value="__custom__">Своя модель — ввести параметры</option>';let chosen=keep?list.find(d=>d.name===old):null;if(!chosen)chosen=list[0]||null;state.selected=chosen||null;$('deviceInput').value=chosen?chosen.name:'__custom__';$('customFields').hidden=!!chosen;if(chosen){$('deviceHint').textContent=`${chosen.maker} · ${fmt(chosen.hash,chosen.hash%1?1:0)} ${unitName(chosen.unit)} · ${chosen.w.toLocaleString('ru-RU')} Вт`;}else{$('deviceHint').textContent='Своя модель: укажи хешрейт и мощность ниже.';$('customFields').hidden=false}calc()}
 $('coinSelect').addEventListener('change',()=>{$('grossRevenue').value='';const c=coin();$('coinPrice').value=state.prices[$('coinSelect').value]||'';$('coinHint').textContent=c.hint;$('algorithmBadge').textContent='Алгоритм: '+c.algo;$('customUnit').innerHTML=({TH:'<option value="TH">TH/s</option><option value="PH">PH/s</option><option value="GH">GH/s</option><option value="MH">MH/s</option><option value="KSOL">kSol/s</option><option value="KH">kH/s</option>',GH:'<option value="GH">GH/s</option><option value="TH">TH/s</option><option value="MH">MH/s</option><option value="KH">kH/s</option>',KSOL:'<option value="KSOL">kSol/s</option><option value="MH">MSol/s</option>'})[c.unit]||'<option value="MH">MH/s</option><option value="GH">GH/s</option><option value="TH">TH/s</option>';fillDevices(false);updateNetworkDisplay($('coinSelect').value);loadMarket()});
@@ -256,7 +256,8 @@ function estimateCoinDaily(tag,hashH){
  const networkFetchedAt=Number(state.networkFetchedAt?.[tag]||0);
  const networkSource=state.networkDataSource?.[tag]||'';
  if(state.networkFetchedAt&&(!networkFetchedAt||Date.now()-networkFetchedAt>(networkSource==='BackPoW'?26:0.25)*60*60*1000))return null;
- if(state.priceUpdatedAt&&Date.now()-state.priceUpdatedAt>10*60*1000&&state.priceSource!=='manual')return null;
+ const priceFetchedAt=Number(state.priceFetchedAt?.[tag]||0);const priceSource=state.priceDataSource?.[tag]||'';
+ if(state.priceFetchedAt&&priceSource!=='manual'&&(!priceFetchedAt||Date.now()-priceFetchedAt>10*60*1000))return null;
  let net=parseMetric(c.nethash??c.network_hashrate??c.networkHashrate??c.hashrate??c.avgHashrate);
  const blockTime=parseSeconds(c.block_time??c.blocktime??c.blockTime??c.block_time_s??c.avgBlockTime);
  const reward=parseMetric(c.block_reward24??c.block_reward??c.reward??c.blockReward??c.reward24);
@@ -332,8 +333,10 @@ async function loadMarket(){
    }
    state.btcUsd=Number(prices.bitcoin?.usd)||state.prices.BTC||0;
    if(Number(prices.dogecoin?.usd)>0)state.prices.DOGE=Number(prices.dogecoin.usd);
+   for(const [ticker,meta] of Object.entries(coins)){if(state.prices[ticker]>0&&Number(prices[meta.cg]?.usd)>0){state.priceFetchedAt[ticker]=now;state.priceDataSource[ticker]='CoinGecko';}}
+   if(state.prices.DOGE>0&&Number(prices.dogecoin?.usd)>0){state.priceFetchedAt.DOGE=now;state.priceDataSource.DOGE='CoinGecko';}
    if(state.prices[selectedTag])$('coinPrice').value=state.prices[selectedTag];
-   state.priceUpdatedAt=now;state.priceSource='CoinGecko';sourceOk.prices=true;
+   sourceOk.prices=!!state.prices[selectedTag];
   }
   if(results[1].status==='fulfilled'){
    const data=results[1].value;
@@ -384,9 +387,9 @@ async function loadMarket(){
   if(results[4+backpowTags.length].status==='fulfilled'&&!(state.btcUsd>0)){
    const p=results[4+backpowTags.length].value;
    const btcUsd=Number(p.USD||p.usd||p.USD?.price);
-   if(btcUsd>0){state.btcUsd=btcUsd;state.prices.BTC=btcUsd;state.priceUpdatedAt=now;state.priceSource='Mempool.space';if(selectedTag==='BTC')$('coinPrice').value=btcUsd;sourceOk.prices=true;}
+   if(btcUsd>0){state.btcUsd=btcUsd;state.prices.BTC=btcUsd;state.priceFetchedAt.BTC=now;state.priceDataSource.BTC='Mempool.space';if(selectedTag==='BTC')$('coinPrice').value=btcUsd;sourceOk.prices=true;}
   }
-  if(num('coinPrice')>0&&state.priceSource==='manual')state.prices[selectedTag]=num('coinPrice');
+  if(num('coinPrice')>0&&state.priceDataSource[selectedTag]==='manual')state.prices[selectedTag]=num('coinPrice');
   updateNetworkDisplay(selectedTag);
   const d=current()||customDevice();
   const estimate=estimateRevenue(selectedTag,hashToH(d));
@@ -395,7 +398,9 @@ async function loadMarket(){
   const networkSource=state.networkDataSource[selectedTag]||'';
   const networkMaxAge=(networkSource==='BackPoW'?26:0.25)*60*60*1000;
   const networkFresh=networkAge>=0&&networkAge<=networkMaxAge;
-  const priceFresh=state.priceSource==='manual'||(state.priceUpdatedAt>0&&now-state.priceUpdatedAt<=10*60*1000);
+  const selectedPriceSource=state.priceDataSource[selectedTag]||'';
+  const selectedPriceFetchedAt=Number(state.priceFetchedAt[selectedTag]||0);
+  const priceFresh=selectedPriceSource==='manual'||(selectedPriceFetchedAt>0&&now-selectedPriceFetchedAt<=10*60*1000);
   if(num('grossRevenue')>0){
    $('status').textContent=estimate?'Используется ручная корректировка дохода вместо автоматической оценки.':'Используется ручная корректировка дохода; автоматическая оценка сейчас недоступна.';
   }else if(estimate?.incomplete&&selectedTag==='LTC'){
@@ -445,5 +450,5 @@ function installNumberArrows(){
 }
 if(window.Telegram&&window.Telegram.WebApp){window.Telegram.WebApp.ready();}
 installNumberArrows();
-['electricity','asicPrice','extraMonthly','poolFee','uptime','customHash','customW','grossRevenue','coinPrice','usdRub','networkHash'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='usdRub'&&num(id)>0)state.fx=num(id);if(id==='coinPrice'&&num(id)>0){state.prices[$('coinSelect').value]=num(id);state.priceUpdatedAt=Date.now();state.priceSource='manual'}calc()}));$('refreshBtn').addEventListener('click',loadMarket);$('coinHint').textContent=coin().hint;$('algorithmBadge').textContent='Алгоритм: '+coin().algo;fillDevices(false);updateNetworkDisplay($('coinSelect').value);loadMarket();
+['electricity','asicPrice','extraMonthly','poolFee','uptime','customHash','customW','grossRevenue','coinPrice','usdRub','networkHash'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='usdRub'&&num(id)>0)state.fx=num(id);if(id==='coinPrice'&&num(id)>0){const tag=$('coinSelect').value;state.prices[tag]=num(id);state.priceFetchedAt[tag]=Date.now();state.priceDataSource[tag]='manual'}calc()}));$('refreshBtn').addEventListener('click',loadMarket);$('coinHint').textContent=coin().hint;$('algorithmBadge').textContent='Алгоритм: '+coin().algo;fillDevices(false);updateNetworkDisplay($('coinSelect').value);loadMarket();
 })();</script></body></html>
