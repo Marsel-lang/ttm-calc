@@ -116,6 +116,7 @@ assert.ok(script.includes('...backpowTags.map(fetchBackpow)'), 'All supported ne
 assert.ok(script.includes('https://data-api.binance.vision/api/v3/ticker/price?symbol='), 'Use the public Binance market-data ticker for supported assets');
 assert.ok(script.includes("state.priceDataSource[tag]==='manual'"), 'Live exchange quotes must not overwrite a manual coin price');
 assert.ok(script.includes("if(results[3].status==='fulfilled')"), 'Mempool hashrate must use its original response slot');
+assert.ok(script.includes("const hasExchangeQuote=priceTags.some(tag=>state.priceDataSource[tag]==='Binance USDT')"), 'Only direct exchange quotes should be labelled as cross-checked against CoinGecko');
 context.state.networkFetchedAt = {BTC:Date.now()-27*60*60*1000};
 context.state.networkDataSource = {BTC:'BackPoW'};
 context.state.priceFetchedAt = {BTC:Date.now()};
