@@ -87,6 +87,10 @@ context.state.networkCoins = [
   {tag:'LTC',name:'Litecoin',nethash:4,source:'BackPoW'}
 ];
 assert.equal(context.findNetwork('DOGE').nethash, 2, 'DOGE lookup must not mistake an LTC record with a DOGE coin alias for the DOGE network');
+context.state.networkCoins = [
+  {tag:'LITECOIN',name:'Litecoin',nethash:3,source:'CoinCalculators'},
+  {tag:'LTC',name:'Litecoin',nethash:4,source:'BackPoW'}
+];
 assert.equal(context.findNetwork('LTC').nethash, 4, 'BackPoW LTC record must beat an earlier LITECOIN alias');
 context.state.networkCoins = savedNetworkCoins;
 assert.equal(context.hashToH({hash:840,unit:'KSOL'}), 840000);
