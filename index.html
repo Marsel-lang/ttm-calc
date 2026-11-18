@@ -449,7 +449,9 @@ async function loadMarket(){
    const priceSources=[...new Set(priceTags.map(tag=>state.priceDataSource[tag]||'CoinGecko'))].join(' + ');
    const deviations=priceTags.map(tag=>{const ref=Number(state.priceReference[tag]||0),livePrice=Number(state.prices[tag]||0);return ref>0&&livePrice>0?Math.abs(livePrice-ref)/ref*100:0;});
    const maxDeviation=Math.max(0,...deviations);
-   const priceCheck=maxDeviation>5?' · расхождение с CoinGecko '+fmt(maxDeviation,1)+'%':' · сверено с CoinGecko';
+   const hasExchangeQuote=priceTags.some(tag=>state.priceDataSource[tag]==='Binance USDT');
+   const allPriceReferences=priceTags.every(tag=>Number(state.priceReference[tag]||0)>0);
+   const priceCheck=hasExchangeQuote&&allPriceReferences?(maxDeviation>5?' · расхождение с CoinGecko '+fmt(maxDeviation,1)+'%':' · сверено с CoinGecko'):'';
    $('status').textContent='Автоматическая оценка рассчитана по '+networkSource+'; цена '+priceSources+priceCheck+'. Фактический доход может отличаться.';
   }else{
    const unsupported=estimateUnsupportedReason(selectedTag);
