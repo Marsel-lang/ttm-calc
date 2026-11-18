@@ -42,6 +42,7 @@ function between(start, end) {
 }
 const parseFns = between('function parseMetric(v){', 'function formatHashrate(value){');
 const hashFn = between('function hashToH(d){', 'function customDevice(){');
+const findFn = between('function findNetwork(tag){', 'function parseMetric(v){');
 const estimateFns = between('function estimateUnsupportedReason(tag){', 'function estimateRevenue(tag,hashH){');
 const revenueFn = between('function estimateRevenue(tag,hashH){', 'async function loadMarket(){');
 
@@ -57,7 +58,7 @@ const networks = {
 };
 const context = {
   Number, Math, Date, String, isFinite, parseFloat,
-  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.03,ZEC:1000,DASH:30,CKB:0.0009},btcUsd:73691},
+  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.03,ZEC:1000,DASH:30,CKB:0.0009},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{}},
   coins: {
     BTC:{algo:'SHA-256'},BCH:{algo:'SHA-256'},LTC:{algo:'Scrypt'},DOGE:{algo:'Scrypt'},
     ALPH:{algo:'Blake3'},ZEC:{algo:'Equihash'},DASH:{algo:'X11'},CKB:{algo:'Eaglesong'},ALEO:{algo:'zkSNARK'}
@@ -65,12 +66,18 @@ const context = {
   findNetwork: tag => networks[tag] || null
 };
 vm.createContext(context);
-vm.runInContext(parseFns + hashFn + estimateFns + revenueFn, context);
+vm.runInContext(findFn + parseFns + hashFn + estimateFns + revenueFn, context);
 
 assert.equal(context.parseMetric('2,5 TH/s'), 2.5e12);
 assert.equal(context.parseMetric('966 EH/s'), 966e18);
 assert.equal(context.parseMetric('3.04P'), 3.04e15);
 assert.equal(context.parseSeconds('2.5 min'), 150);
+context.state.btcNetwork = {tag:'BTC',nethash:123};
+context.state.networkDataSource.BTC = 'CoinCalculators';
+assert.equal(context.findNetwork('BTC').nethash, networks.BTC.nethash, 'A stale Mempool BTC record must not override newer CoinCalculators data');
+context.state.networkDataSource.BTC = 'Mempool.space';
+assert.equal(context.findNetwork('BTC').nethash, 123, 'Fresh Mempool BTC data should take precedence');
+context.state.btcNetwork = null;
 assert.equal(context.hashToH({hash:840,unit:'KSOL'}), 840000);
 
 const btc = context.estimateCoinDaily('BTC',234e12);
