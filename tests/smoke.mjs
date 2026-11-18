@@ -111,6 +111,7 @@ assert.ok(dash && Math.abs(dash.usd-4.769913)<0.02, `DASH must use miner payout 
 assert.ok(zec && Math.abs(zec.usd-33.447793)<0.1, `ZEC must use miner payout once: ${zec?.usd}`);
 const ltc = context.estimateRevenue('LTC',16e9);
 assert.ok(ltc && ltc.components.LTC && ltc.components.DOGE, 'Merged LTC + DOGE estimate must include both components');
+assert.ok(ltc.dogeCoins>200, `DOGE merged-mining reward should use its own network record: ${ltc.dogeCoins}`);
 assert.ok(script.includes('...backpowTags.map(fetchBackpow)'), 'All supported network datasets must be requested on refresh');
 context.state.networkFetchedAt = {BTC:Date.now()-27*60*60*1000};
 context.state.networkDataSource = {BTC:'BackPoW'};
