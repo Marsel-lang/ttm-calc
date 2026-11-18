@@ -406,7 +406,7 @@ async function loadMarket(){
    if(tag===selectedTag)$('coinPrice').value=price;
    sourceOk.prices=true;
   });
-  if(results[exchangeStart+exchangeTags.length].status==='fulfilled'&&!(state.btcUsd>0)){
+  if(results[3].status==='fulfilled'){
    const payload=results[3].value;
    const series=Array.isArray(payload.hashrates)?payload.hashrates:[];
    const latest=[...series].reverse().find(x=>Number(x.avgHashrate)>0);
