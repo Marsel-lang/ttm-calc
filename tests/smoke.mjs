@@ -88,11 +88,12 @@ assert.ok(ltc && ltc.components.LTC && ltc.components.DOGE, 'Merged LTC + DOGE e
 assert.ok(script.includes('...backpowTags.map(fetchBackpow)'), 'All supported network datasets must be requested on refresh');
 context.state.networkFetchedAt = {BTC:Date.now()-27*60*60*1000};
 context.state.networkDataSource = {BTC:'BackPoW'};
-context.state.priceUpdatedAt = Date.now();
+context.state.priceFetchedAt = {BTC:Date.now()};
+context.state.priceDataSource = {BTC:'CoinGecko'};
 assert.equal(context.estimateCoinDaily('BTC',234e12), null, 'Stale daily network data must not produce an automatic estimate');
 context.state.networkFetchedAt.BTC = Date.now();
 assert.ok(context.estimateCoinDaily('BTC',234e12), 'Fresh network and market data should allow an estimate');
-context.state.priceUpdatedAt = Date.now()-11*60*1000;
+context.state.priceFetchedAt.BTC = Date.now()-11*60*1000;
 assert.equal(context.estimateCoinDaily('BTC',234e12), null, 'Stale market prices must not produce an automatic estimate');
 
 console.log(`Smoke tests passed: ${coinTags.length} coins, ${deviceRows.length} ASIC entries, DOM selectors, parsing, BTC, ALPH, CKB, DASH, ZEC, LTC+DOGE and ALEO guard.`);
