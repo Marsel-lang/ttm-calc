@@ -165,7 +165,8 @@ function findNetwork(tag){
  if(tag==='BTC'&&state.btcNetwork&&state.networkDataSource?.BTC==='Mempool.space')return state.btcNetwork;
  const aliases={BTC:['BTC','BITCOIN'],BCH:['BCH','BCC','BITCOIN CASH'],LTC:['LTC','LITECOIN'],DOGE:['DOGE','DOGECOIN'],KAS:['KAS','KASPA'],ALPH:['ALPH','ALEPHIUM'],ZEC:['ZEC','ZCASH'],ETC:['ETC','ETHEREUM CLASSIC'],DASH:['DASH'],CKB:['CKB','NERVOS'],ALEO:['ALEO']};
  const wanted=aliases[tag]||[tag];
- return state.networkCoins.find(x=>wanted.includes(String(x.tag||x.symbol||x.ticker||'').toUpperCase())||wanted.some(a=>String(x.name||'').toUpperCase()===a||String(x.name||'').toUpperCase().startsWith(a+' ')||String(x.name||'').toUpperCase().endsWith(' '+a))||wanted.includes(String(x.coin||'').toUpperCase()))||null;
+ const matches=state.networkCoins.filter(x=>wanted.includes(String(x.tag||x.symbol||x.ticker||'').toUpperCase())||wanted.some(a=>String(x.name||'').toUpperCase()===a||String(x.name||'').toUpperCase().startsWith(a+' ')||String(x.name||'').toUpperCase().endsWith(' '+a))||wanted.includes(String(x.coin||'').toUpperCase()));
+ return matches.find(x=>x.source==='BackPoW')||matches[0]||null;
 }
 function parseMetric(v){
  if(typeof v==='number')return Number.isFinite(v)?v:NaN;
