@@ -80,7 +80,7 @@ assert.equal(context.findNetwork('BTC').nethash, 123, 'Fresh Mempool BTC data sh
 context.state.btcNetwork = null;
 const savedNetworkCoins = context.state.networkCoins;
 context.state.networkCoins = [
-  {tag:'LTC',name:'Litecoin',coin:'DOGE',nethash:99,source:'BackPoW'},
+  {tag:'LTC',name:'Litecoin + Dogecoin',coin:'DOGE',nethash:99,source:'BackPoW'},
   {tag:'DOGECOIN',name:'Dogecoin',nethash:1,source:'CoinCalculators'},
   {tag:'DOGE',name:'Dogecoin',nethash:2,source:'BackPoW'},
   {tag:'LITECOIN',name:'Litecoin',nethash:3,source:'CoinCalculators'},
