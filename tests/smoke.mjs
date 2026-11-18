@@ -78,6 +78,16 @@ assert.equal(context.findNetwork('BTC').nethash, networks.BTC.nethash, 'A stale 
 context.state.networkDataSource.BTC = 'Mempool.space';
 assert.equal(context.findNetwork('BTC').nethash, 123, 'Fresh Mempool BTC data should take precedence');
 context.state.btcNetwork = null;
+const savedNetworkCoins = context.state.networkCoins;
+context.state.networkCoins = [
+  {tag:'DOGECOIN',name:'Dogecoin',nethash:1,source:'CoinCalculators'},
+  {tag:'DOGE',name:'Dogecoin',nethash:2,source:'BackPoW'},
+  {tag:'LITECOIN',name:'Litecoin',nethash:3,source:'CoinCalculators'},
+  {tag:'LTC',name:'Litecoin',nethash:4,source:'BackPoW'}
+];
+assert.equal(context.findNetwork('DOGE').nethash, 2, 'BackPoW DOGE record must beat an earlier DOGECOIN alias');
+assert.equal(context.findNetwork('LTC').nethash, 4, 'BackPoW LTC record must beat an earlier LITECOIN alias');
+context.state.networkCoins = savedNetworkCoins;
 assert.equal(context.hashToH({hash:840,unit:'KSOL'}), 840000);
 
 const btc = context.estimateCoinDaily('BTC',234e12);
