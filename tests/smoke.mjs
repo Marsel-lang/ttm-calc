@@ -73,22 +73,22 @@ assert.equal(context.parseMetric('966 EH/s'), 966e18);
 assert.equal(context.parseMetric('3.04P'), 3.04e15);
 assert.equal(context.parseSeconds('2.5 min'), 150);
 context.state.btcNetwork = {tag:'BTC',nethash:123};
-context.state.networkDataSource.BTC = 'CoinCalculators';
-assert.equal(context.findNetwork('BTC').nethash, networks.BTC.nethash, 'A stale Mempool BTC record must not override newer CoinCalculators data');
+context.state.networkDataSource.BTC = 'legacy source';
+assert.equal(context.findNetwork('BTC').nethash, networks.BTC.nethash, 'A stale Mempool BTC record must not override newer legacy source data');
 context.state.networkDataSource.BTC = 'Mempool.space';
 assert.equal(context.findNetwork('BTC').nethash, 123, 'Fresh Mempool BTC data should take precedence');
 context.state.btcNetwork = null;
 const savedNetworkCoins = context.state.networkCoins;
 context.state.networkCoins = [
   {tag:'LTC',name:'Litecoin + Dogecoin',coin:'DOGE',nethash:99,source:'BackPoW'},
-  {tag:'DOGECOIN',name:'Dogecoin',nethash:1,source:'CoinCalculators'},
+  {tag:'DOGECOIN',name:'Dogecoin',nethash:1,source:'legacy source'},
   {tag:'DOGE',name:'Dogecoin',nethash:2,source:'BackPoW'},
-  {tag:'LITECOIN',name:'Litecoin',nethash:3,source:'CoinCalculators'},
+  {tag:'LITECOIN',name:'Litecoin',nethash:3,source:'legacy source'},
   {tag:'LTC',name:'Litecoin',nethash:4,source:'BackPoW'}
 ];
 assert.equal(context.findNetwork('DOGE').nethash, 2, 'DOGE lookup must not mistake an LTC record with a DOGE coin alias for the DOGE network');
 context.state.networkCoins = [
-  {tag:'LITECOIN',name:'Litecoin',nethash:3,source:'CoinCalculators'},
+  {tag:'LITECOIN',name:'Litecoin',nethash:3,source:'legacy source'},
   {tag:'LTC',name:'Litecoin',nethash:4,source:'BackPoW'}
 ];
 assert.equal(context.findNetwork('LTC').nethash, 4, 'BackPoW LTC record must beat an earlier LITECOIN alias');
@@ -99,7 +99,7 @@ const btc = context.estimateCoinDaily('BTC',234e12);
 assert.ok(btc && Math.abs(btc.usd - 8.03) < 0.1, `BTC reference estimate mismatch: ${btc?.usd}`);
 const alph = context.estimateCoinDaily('ALPH',399.64e9);
 assert.ok(alph && Math.abs(alph.usd-0.0602479582)<0.002, `ALPH estimate must match BackPoW aggregate-chain reference: ${alph?.usd}`);
-context.state.networkDataSource.ALPH = 'CoinCalculators';
+context.state.networkDataSource.ALPH = 'legacy source';
 assert.equal(context.estimateCoinDaily('ALPH',399.64e9), null, 'ALPH must not use an unverified per-chain block-time convention');
 context.state.networkDataSource.ALPH = 'BackPoW';
 const ckb = context.estimateCoinDaily('CKB',63.5e12);
@@ -120,7 +120,7 @@ assert.ok(ltc.dogeCoins>50, `DOGE merged-mining reward should use its own networ
 assert.ok(script.includes('...backpowTags.map(fetchBackpow)'), 'All supported network datasets must be requested on refresh');
 assert.ok(script.includes('https://data-api.binance.vision/api/v3/ticker/price?symbol='), 'Use the public Binance market-data ticker for supported assets');
 assert.ok(script.includes("state.priceDataSource[tag]==='manual'"), 'Live exchange quotes must not overwrite a manual coin price');
-assert.ok(script.includes("if(results[3].status==='fulfilled')"), 'Mempool hashrate must use its original response slot');
+assert.ok(script.includes("if(results[2].status==='fulfilled')"), 'Mempool hashrate must use its original response slot');
 assert.ok(script.includes("const hasExchangeQuote=priceTags.some(tag=>state.priceDataSource[tag]==='Binance USDT')"), 'Only direct exchange quotes should be labelled as cross-checked against CoinGecko');
 context.state.networkFetchedAt = {BTC:Date.now()-27*60*60*1000};
 context.state.networkDataSource = {BTC:'BackPoW'};
