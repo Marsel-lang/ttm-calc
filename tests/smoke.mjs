@@ -15,6 +15,14 @@ assert.equal(idSet.size, ids.length, 'HTML element IDs must be unique');
 const missing = [...new Set([...script.matchAll(/\$\('([^']+)'\)/g)].map(m => m[1]))]
   .filter(id => !idSet.has(id));
 assert.deepEqual(missing, [], 'Every hard-coded DOM selector must exist');
+const sourcesStart=html.indexOf('<p class="note">Источники:');
+const sourcesEnd=html.indexOf('</p>',sourcesStart);
+assert.ok(sourcesStart>=0&&sourcesEnd>sourcesStart,'Compact source list exists');
+const sourcesHtml=html.slice(sourcesStart,sourcesEnd);
+for(const source of ['BackPoW','CoinGecko','Binance','Mempool.space','CBR-XML-Daily','ExchangeRate API','Bitdeer','MicroBT','Bitmain','Canaan','IceRiver','iBeLink','ElphaPex','Goldshell','Jasminer','iPollo','Innosilicon']) {
+  assert.ok(sourcesHtml.includes('>'+source+'</a>'),`Missing source link: ${source}`);
+}
+assert.ok(!/<a\b(?![^>]*\brel="noopener")[^>]*target="_blank"/.test(sourcesHtml),'External source links must use rel=noopener');
 
 const coinStart = script.indexOf('const coins={');
 const coinEnd = script.indexOf('};', coinStart);
