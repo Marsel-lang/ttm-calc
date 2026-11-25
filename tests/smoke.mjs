@@ -25,6 +25,7 @@ for(const source of ['BackPoW','CoinGecko','Binance','Mempool.space','CBR-XML-Da
 assert.ok(!/<a\b(?![^>]*\brel="noopener")[^>]*target="_blank"/.test(sourcesHtml),'External source links must use rel=noopener');
 assert.ok(sourcesHtml.includes('href="https://www.exchangerate-api.com"'),'ExchangeRate-API attribution must link to its official provider site');
 assert.ok(html.includes('<span>Доходность за год</span>'),'Annual net return percentage must not be mislabeled as payback period');
+assert.ok(script.includes('const step=numberInputStep(input,current)'),'Custom numeric arrows must use field-appropriate increments');
 
 const coinStart = script.indexOf('const coins={');
 const coinEnd = script.indexOf('};', coinStart);
@@ -78,6 +79,7 @@ const revenueFn = between('function estimateAleoDevice(hashH,device){', 'async f
 const profitFn = between('function calculateDailyProfit(', 'function calc(){');
 const fxFn = between('function fxIsFresh(){', 'const toUsd=');
 const dailyYieldFn = between('function dailyCoinYield(', 'function calc(){');
+const numberStepFn = between('function numberInputStep(input,current){', 'function change(dir){');
 
 const networks = {
   BTC: {tag:'BTC',nethash:966e18,block_time:600,block_reward:3.125,emission:{oracleRewardBasis:'total',minerShare:1,status:'ok',subsidyNow:3.125,observedReward:3.14}},
@@ -103,7 +105,7 @@ const context = {
 };
 vm.createContext(context);
 context.fmt=(n,d=2)=>Number(n).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});
-vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn + fxFn + dailyYieldFn, context);
+vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn + fxFn + dailyYieldFn + numberStepFn, context);
 
 assert.equal(context.dailyCoinYield({coins:0.086291},'BTC',0,false),'≈ 0,000000 BTC / день','Displayed coin/day must be zero when uptime is zero');
 assert.equal(context.dailyCoinYield({coins:0.086291},'BTC',100,false),'≈ 0,086291 BTC / день','Displayed coin/day must show the full daily yield at 100% uptime');
@@ -115,6 +117,8 @@ assert.equal(context.parseMetric('966 EH/s'), 966e18);
 assert.equal(context.parseMetric('3.04P'), 3.04e15);
 assert.equal(context.parseSeconds('2.5 min'), 150);
 assert.equal(context.parseMetric('685,45'), 685.45);
+assert.equal(context.parseMetric('0,234'), 0.234, 'A comma decimal below one must not be parsed as a thousands separator');
+assert.equal(context.parseMetric('0,001'), 0.001, 'Small comma-decimal network metrics must preserve their scale');
 assert.equal(context.parseMetric('0.000749'), 0.000749);
 assert.equal(context.parseMetric('1.25 PH/s'), 1.25e15);
 assert.equal(context.parseSeconds('250 ms'), 0.25);
@@ -167,6 +171,23 @@ context.state.networkCoins = [
 assert.equal(context.findNetwork('LTC').nethash, 4, 'BackPoW LTC record must beat an earlier LITECOIN alias');
 context.state.networkCoins = savedNetworkCoins;
 assert.equal(context.hashToH({hash:840,unit:'KSOL'}), 840000);
+for (const [unit,factor] of Object.entries({PH:1e15,TH:1e12,GH:1e9,MH:1e6,KH:1e3,KSOL:1e3})) {
+  assert.equal(context.hashToH({hash:1.25,unit}),1.25*factor,`Custom ${unit} conversion must preserve the correct scale`);
+}
+for (const d of parsedDevices) {
+  assert.ok(context.hashToH(d)>0,`Catalog hashrate must convert to a positive base rate: ${d.name}`);
+}
+const expectedAlgorithms={BTC:'SHA-256',BCH:'SHA-256',LTC:'Scrypt',KAS:'kHeavyHash',ALPH:'Blake3',ZEC:'Equihash',ETC:'Etchash',DASH:'X11',CKB:'Eaglesong',ALEO:'zkSNARK'};
+for (const d of parsedDevices) for (const tag of d.coins) {
+  assert.equal(expectedAlgorithms[tag],context.coins[tag].algo,`ASIC ${d.name} must only map to a compatible algorithm for ${tag}`);
+}
+for (const [id,value,expected] of [
+  ['electricity',5.5,0.1],['poolFee',2,0.1],['uptime',100,1],['customW',3500,10],
+  ['coinPrice',0.000749,0.000001],['usdRub',82.31,0.01],['asicPrice',250000,1000],
+  ['extraMonthly',0,100],['customHash',200,1]
+]) {
+  assert.equal(context.numberInputStep({id,value:String(value),step:'any'},value),expected,`Numeric arrows must use a sensible step for ${id}`);
+}
 
 const ckbSample = context.calculateDailyProfit(3.98,3080,0.02,1,5.5/82.313,0);
 assert.ok(Math.abs(ckbSample.net-(3.98-3.98*0.02-(3.08*24*5.5/82.313)))<1e-10, 'Net profit must subtract pool fee and electricity from gross revenue');
@@ -178,6 +199,21 @@ const fullFee = context.calculateDailyProfit(10,1000,1,1,0,0);
 assert.equal(fullFee.net,0, 'A 100% pool fee must leave no mining revenue before electricity');
 const fixedCosts = context.calculateDailyProfit(0,0,0,1,0,30);
 assert.equal(fixedCosts.net,-1, 'Fixed monthly expenses must be charged at one-thirtieth per day even with no mining revenue');
+const scenarios=[
+  {input:[10,1000,0.02,1,0.1,0],gross:10,pool:0.2,electric:2.4,extra:0,net:7.4},
+  {input:[10,1000,0.02,0.5,0.1,30],gross:5,pool:0.1,electric:1.2,extra:1,net:2.7},
+  {input:[10,1000,0,0,0.1,30],gross:0,pool:0,electric:0,extra:1,net:-1},
+  {input:[10,1000,1,1,0,0],gross:10,pool:10,electric:0,extra:0,net:0}
+];
+for (const scenario of scenarios) {
+  const result=context.calculateDailyProfit(...scenario.input);
+  for (const key of ['gross','pool','electric','extraDay','net']) {
+    const expected=key==='extraDay'?scenario.extra:scenario[key];
+    assert.ok(Math.abs(result[key]-expected)<1e-10,`Profit scenario ${key} must match the independent expected value`);
+  }
+  assert.equal(result.month,result.net*30,'Monthly profit must equal 30 daily periods');
+  assert.equal(result.year,result.net*365,'Annual profit must equal 365 daily periods');
+}
 const ltcDirect = context.estimateCoinDaily('LTC',16e9);
 const dogeDirect = context.estimateCoinDaily('DOGE',16e9);
 assert.ok(ltcDirect && ltcDirect.usd > 0, 'LTC must have an independent Scrypt network estimate');
