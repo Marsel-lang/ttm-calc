@@ -25,6 +25,19 @@ assert.deepEqual(coinTags, ['BTC','BCH','LTC','KAS','ALPH','ZEC','ETC','DASH','C
 
 const deviceRows = [...script.matchAll(/\['[^']+','[^']+','[^']+','[^']+','[^']+',\d+\]/g)];
 assert.ok(deviceRows.length >= 65, `Expected broad ASIC catalogue, found ${deviceRows.length}`);
+const parsedDevices = deviceRows.map(m => ({name:m[1],brand:m[2],coins:m[3].split(','),hash:Number(m[4]),unit:m[5],watts:Number(m[6])}));
+assert.equal(new Set(parsedDevices.map(d => d.name)).size, parsedDevices.length, 'ASIC model names must be unique');
+for (const d of parsedDevices) {
+  assert.ok(d.brand && d.hash > 0 && d.watts > 0, `Invalid ASIC specification: ${d.name}`);
+  assert.ok(['TH','PH','GH','MH','KSOL','KH'].includes(d.unit), `Unknown hashrate unit: ${d.name}`);
+  assert.ok(d.coins.length > 0 && d.coins.every(tag => coinTags.includes(tag)), `Invalid coin mapping: ${d.name}`);
+}
+assert.equal(parsedDevices.length, 70, 'Current reviewed ASIC catalogue should contain 70 distinct models');
+assert.ok(script.includes("const grossManualSet=$('grossRevenue').value.trim()!==''"), 'An explicitly entered zero gross revenue must be treated as a manual override');
+assert.ok(script.includes("if($('grossRevenue').value.trim()!==''") , 'Manual revenue status must distinguish blank from zero');
+assert.ok(script.includes("else{delete state.prices[tag];delete state.priceFetchedAt[tag];delete state.priceDataSource[tag];"), 'Clearing manual coin price must restore automatic pricing');
+assert.ok(script.includes("state.fxManual=true"), 'A manually entered FX rate must not be overwritten by automatic FX refresh');
+assert.ok(script.includes("state.fxManual=false;state.fx=0"), 'Clearing manual FX must restore automatic FX mode');
 assert.ok(!script.includes("['iBeLink BM-K1 Max','iBeLink','CKB'"), 'Kadena BM-K1 Max must not be listed as a CKB miner');
 for (const model of ['Antminer S23 Hyd 3U','Antminer S21 Pro','Antminer Z15 K','IceRiver KS7 Lite','IceRiver AL2 Lite','IceRiver AE3']) {
   assert.ok(script.includes(model), `Missing ASIC model: ${model}`);
@@ -77,6 +90,16 @@ assert.equal(context.parseMetric('2,5 TH/s'), 2.5e12);
 assert.equal(context.parseMetric('966 EH/s'), 966e18);
 assert.equal(context.parseMetric('3.04P'), 3.04e15);
 assert.equal(context.parseSeconds('2.5 min'), 150);
+assert.equal(context.parseMetric('685,45'), 685.45);
+assert.equal(context.parseMetric('0.000749'), 0.000749);
+assert.equal(context.parseMetric('1.25 PH/s'), 1.25e15);
+assert.equal(context.parseSeconds('250 ms'), 0.25);
+assert.equal(context.hashToH({hash:1,unit:'PH'}), 1e15);
+assert.equal(context.hashToH({hash:1,unit:'TH'}), 1e12);
+assert.equal(context.hashToH({hash:1,unit:'GH'}), 1e9);
+assert.equal(context.hashToH({hash:1,unit:'MH'}), 1e6);
+assert.equal(context.hashToH({hash:1,unit:'KSOL'}), 1e3);
+assert.equal(context.hashToH({hash:1,unit:'KH'}), 1e3);
 context.state.btcNetwork = {tag:'BTC',nethash:123};
 context.state.networkDataSource.BTC = 'legacy source';
 assert.equal(context.findNetwork('BTC').nethash, networks.BTC.nethash, 'A stale Mempool BTC record must not override newer legacy source data');
@@ -106,6 +129,14 @@ assert.ok(ckbSample.net<0, 'CKB sample must show a loss when electricity exceeds
 const offline = context.calculateDailyProfit(3.98,3080,0.02,0,5.5/82.313,0);
 assert.equal(offline.gross,0, 'Zero uptime must produce zero mining revenue');
 assert.equal(offline.electric,0, 'Zero uptime must produce zero ASIC electricity consumption');
+const fullFee = context.calculateDailyProfit(10,1000,1,1,0,0);
+assert.equal(fullFee.net,0, 'A 100% pool fee must leave no mining revenue before electricity');
+const fixedCosts = context.calculateDailyProfit(0,0,0,1,0,30);
+assert.equal(fixedCosts.net,-1, 'Fixed monthly expenses must be charged at one-thirtieth per day even with no mining revenue');
+const ltcDirect = context.estimateCoinDaily('LTC',16e9);
+const dogeDirect = context.estimateCoinDaily('DOGE',16e9);
+assert.ok(ltcDirect && ltcDirect.usd > 0, 'LTC must have an independent Scrypt network estimate');
+assert.ok(dogeDirect && dogeDirect.usd > 0, 'DOGE must have an independent merged-mining network estimate');
 const bch = context.estimateCoinDaily('BCH',234e12);
 assert.ok(bch && bch.usd > 0, 'BCH must use its own SHA-256 network and block reward');
 const kas = context.estimateCoinDaily('KAS',40e12);
