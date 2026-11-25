@@ -24,6 +24,7 @@ for (const source of ['CoinGecko','Binance','BackPoW','Mempool.space','CBR-XML-D
 }
 assert.ok(!sourcesHtml.includes('>ExchangeRate API</a>'),'Unused ExchangeRate API label must be removed');
 assert.ok(sourcesHtml.includes('https://open.er-api.com/v6/latest/USD'),'FX fallback must point to the endpoint actually used by the calculator');
+assert.ok(sourcesHtml.includes('— основной источник.<br><a href="https://open.er-api.com/v6/latest/USD"'),'USD/RUB fallback must appear on a separate line');
 assert.ok(sourcesHtml.includes('не опрашиваются при каждом расчёте'),'Manufacturer references must be distinguished from live APIs');
 assert.ok(!/<a\\b(?![^>]*\\brel="noopener")[^>]*target="_blank"/.test(sourcesHtml),'External source links must use rel=noopener');
 assert.ok(html.includes('<span>Доходность за год</span>'),'Annual net return percentage must not be mislabeled as payback period');
