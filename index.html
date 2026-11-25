@@ -292,7 +292,8 @@ function estimateCoinDaily(tag,hashH){
  const observedReward=String(c.emission?.status||'')==='ok'?parseMetric(c.emission?.observedReward):NaN;
  // CKB's latest block reward can include unusually large transaction fees.
  // Use its 24-hour average reward per block for a steadier expected daily estimate.
- const reward=tag==='CKB'
+ const btcSubsidy=parseMetric(c.emission?.subsidyNow??c.block_reward);
+ const reward=tag==='BTC'?(btcSubsidy>0?btcSubsidy:3.125):tag==='CKB'
   ?parseMetric(c.block_reward24??c.block_reward??c.reward??c.blockReward??c.reward24)
   :(observedReward>0?observedReward:parseMetric(c.block_reward24??c.block_reward??c.reward??c.blockReward??c.reward24));
  const priceBtc=parseMetric(c.exchange_rate??c.price_btc??c.priceInBtc??c.btc_exchange_rate);
@@ -307,7 +308,7 @@ function estimateCoinDaily(tag,hashH){
   if(diff>0&&(algo.includes('sha-256')||algo.includes('sha256')||['BTC','BCH'].includes(tag)))net=diff*4294967296/blockTime;
  }
  // BTC uses the live network hashrate and current per-block subsidy; transaction fees are excluded.
- const effectiveBlockTime=blockTime>0?blockTime:(tag==='BTC'?600:NaN);
+ const effectiveBlockTime=tag==='BTC'?600:(blockTime>0?blockTime:NaN);
  const effectiveReward=reward>0?reward:(tag==='BTC'?3.125:NaN);
  // BackPoW's block reward is the whole block subsidy. Apply the protocol miner share
  // for coins where the subsidy is split between miners and other recipients.
@@ -447,7 +448,9 @@ async function loadMarket(){
    const latest=[...series].reverse().find(x=>Number(x.avgHashrate)>0);
    const currentHash=Number(payload.currentHashrate)>0?Number(payload.currentHashrate):Number(latest?.avgHashrate);
    if(currentHash>0){
-    state.btcNetwork={tag:'BTC',name:'Bitcoin',algorithm:'SHA-256',nethash:currentHash,block_time:600,block_reward:3.125,source:'Mempool.space'};
+    const backpowBtc=state.networkCoins.find(x=>String(x.tag||'').toUpperCase()==='BTC'&&x.source==='BackPoW');
+    const subsidy=parseMetric(backpowBtc?.emission?.subsidyNow);
+    state.btcNetwork={tag:'BTC',name:'Bitcoin',algorithm:'SHA-256',nethash:currentHash,block_time:600,block_reward:subsidy>0?subsidy:3.125,emission:backpowBtc?.emission||null,source:'Mempool.space'};
     state.networkFetchedAt.BTC=now;state.networkDataSource.BTC='Mempool.space';
     sourceOk.bitcoin=true;sourceOk.network=true;
    }
