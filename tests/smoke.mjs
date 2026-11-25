@@ -19,7 +19,7 @@ const sourcesStart=html.indexOf('<p class="note">Источники:');
 const sourcesEnd=html.indexOf('</p>',sourcesStart);
 assert.ok(sourcesStart>=0&&sourcesEnd>sourcesStart,'Compact source list exists');
 const sourcesHtml=html.slice(sourcesStart,sourcesEnd);
-for(const source of ['BackPoW','CoinGecko','Binance','Mempool.space','CBR-XML-Daily','ExchangeRate API','Bitdeer','MicroBT','Bitmain','Canaan','IceRiver','iBeLink','ElphaPex','Goldshell','Jasminer','iPollo','Innosilicon']) {
+for(const source of ['BackPoW','CoinGecko','Binance','Mempool.space','CBR-XML-Daily','ExchangeRate API','Bitdeer','MicroBT','Bitmain','Canaan','Canaan A1566','IceRiver','iBeLink','ElphaPex','Goldshell','Jasminer','iPollo','Innosilicon']) {
   assert.ok(sourcesHtml.includes('>'+source+'</a>'),`Missing source link: ${source}`);
 }
 assert.ok(!/<a\b(?![^>]*\brel="noopener")[^>]*target="_blank"/.test(sourcesHtml),'External source links must use rel=noopener');
