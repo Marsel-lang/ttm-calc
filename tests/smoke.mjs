@@ -23,6 +23,7 @@ for(const source of ['BackPoW','CoinGecko','Binance','Mempool.space','CBR-XML-Da
   assert.ok(sourcesHtml.includes('>'+source+'</a>'),`Missing source link: ${source}`);
 }
 assert.ok(!/<a\b(?![^>]*\brel="noopener")[^>]*target="_blank"/.test(sourcesHtml),'External source links must use rel=noopener');
+assert.ok(sourcesHtml.includes('href="https://www.exchangerate-api.com"'),'ExchangeRate-API attribution must link to its official provider site');
 
 const coinStart = script.indexOf('const coins={');
 const coinEnd = script.indexOf('};', coinStart);
