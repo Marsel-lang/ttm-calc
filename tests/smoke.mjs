@@ -53,12 +53,12 @@ const networks = {
   ALPH: {tag:'ALPH',nethash:4.649987319732508e15,block_time:0.54,block_reward24:0.14,emission:{oracleRewardBasis:'total',minerShare:1}},
   ZEC: {tag:'ZEC',nethash:36.14910666503059e9,block_time:24,block_reward24:0.42,emission:{oracleRewardBasis:'miner',minerShare:0.8}},
   DASH: {tag:'DASH',nethash:3.188109791242718e15,block_time:157.285,block_reward24:0.41,emission:{oracleRewardBasis:'miner',minerShare:0.2}},
-  CKB: {tag:'CKB',nethash:75.00833379562404e15,block_time:10.086,block_reward24:685.45,emission:{oracleRewardBasis:'miner',minerShare:0.64057}},
+  CKB: {tag:'CKB',nethash:75.00833379562404e15,block_time:10.086,block_reward24:685.45,emission:{oracleRewardBasis:'miner',minerShare:0.64057,status:'ok',observedReward:775.86}},
   ALEO: {tag:'ALEO',nethash:4.128650163258353e12,block_time:9.58,block_reward24:24.659349,usdPrice:0.02820313,ASICS:[{name:'Iceriver AE3',hashrate:1995400000,watts:3400,revenue:3.0387038347417725,revenueAt:0.02820313}],emission:{oracleRewardBasis:'miner',status:'needs_live_input'}}
 };
 const context = {
   Number, Math, Date, String, isFinite, parseFloat,
-  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.031487,ZEC:949.01,DASH:38.12,CKB:0.000749,ALEO:0.02820313},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{ALPH:'BackPoW',ZEC:'BackPoW',DASH:'BackPoW',CKB:'BackPoW',ALEO:'BackPoW'},networkFetchedAt:{},priceFetchedAt:{},priceDataSource:{}},
+  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.031487,ZEC:949.01,DASH:38.12,CKB:0.000749,ALEO:0.02820313},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{ALPH:'BackPoW',ZEC:'BackPoW',DASH:'BackPoW',CKB:'BackPoW',ALEO:'BackPoW'}},
   coins: {
     BTC:{algo:'SHA-256'},BCH:{algo:'SHA-256'},LTC:{algo:'Scrypt'},DOGE:{algo:'Scrypt'},
     ALPH:{algo:'Blake3'},ZEC:{algo:'Equihash'},DASH:{algo:'X11'},CKB:{algo:'Eaglesong'},ALEO:{algo:'zkSNARK'}
@@ -104,6 +104,7 @@ assert.equal(context.estimateCoinDaily('ALPH',399.64e9), null, 'ALPH must not us
 context.state.networkDataSource.ALPH = 'BackPoW';
 const ckb = context.estimateCoinDaily('CKB',63.5e12);
 assert.ok(ckb && ckb.usd > 0, 'CKB must calculate automatically from confirmed miner-reward basis');
+assert.ok(ckb.usd > 3.5 && ckb.usd < 4.5, 'CKB estimate must remain in the range of the live BackPoW K7 benchmark');
 const aleo = context.estimateRevenue('ALEO',2e9,{name:'IceRiver AE3',w:3400});
 assert.ok(aleo && Math.abs(aleo.usd-3.0387038347)<0.001, 'ALEO AE3 must use the exact BackPoW device benchmark, scaled by the live price');
 assert.equal(context.estimateRevenue('ALEO',2e9,{name:'Custom device',w:3400}), null, 'ALEO custom devices must not be extrapolated from an unverified prover rate');
