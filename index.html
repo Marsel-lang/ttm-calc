@@ -115,7 +115,7 @@ details[open] > summary:after, .result-details[open] > summary:after {
 <button type="button" class="primary-btn" id="refreshBtn">Пересчитать</button><p class="status" id="status">Загружаю цены монет и курс валют…</p></form>
 <details class="settings"><summary>Дополнительные настройки (необязательно)</summary><div class="details-inner"><label for="grossRevenue">Ручная корректировка дохода в день, USD (необязательно)</label><input id="grossRevenue" type="number" min="0" step="any" placeholder="Оставь пустым для автоматического расчёта"><p class="hint">Обычно это поле не требуется. Заполняй его только если хочешь заменить автоматическую оценку собственными данными.</p><label for="poolFee">Комиссия пула, %</label><input id="poolFee" type="number" min="0" max="100" step="any" value="2"><label for="extraMonthly">Дополнительные расходы за месяц</label><div class="row"><input id="extraMonthly" type="number" min="0" step="any" value="0"><div class="currency" data-currency="extraMonthly"><button type="button" data-value="RUB" class="active">₽</button><button type="button" data-value="USD">$</button></div></div><label for="uptime">Время работы оборудования, %</label><input id="uptime" type="number" min="1" max="100" step="1" value="100"></div></details>
 <details class="settings"><summary>Рыночные данные</summary><div class="details-inner"><label for="coinPrice">Цена выбранной монеты, USD</label><input id="coinPrice" type="number" min="0" step="any" placeholder="Автоматически"><label for="usdRub">Курс USD/RUB</label><input id="usdRub" type="number" min="0" step="any" placeholder="Автоматически"><label for="networkHash">Хешрейт сети, H/s</label><input id="networkHash" type="text" readonly placeholder="Загружается автоматически"><p class="hint" id="networkHashHint">Значение обновляется автоматически из сетевого источника, если он предоставляет этот показатель.</p><p class="hint">Цена монеты и курс USD/RUB также загружаются автоматически из внешних источников.</p></div></details>
-<p class="note">Источники: <a href="https://backpow.com/api" target="_blank" rel="noopener">BackPoW</a> · <a href="https://coincalculators.io/api/" target="_blank" rel="noopener">CoinCalculators</a> · <a href="https://docs.coingecko.com/reference/simple-price" target="_blank" rel="noopener">CoinGecko</a> · <a href="https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints" target="_blank" rel="noopener">Binance</a> · <a href="https://mempool.space/docs/api/rest" target="_blank" rel="noopener">Mempool.space</a> · <a href="https://www.cbr-xml-daily.ru/daily_json.js" target="_blank" rel="noopener">CBR-XML-Daily</a> · <a href="https://open.er-api.com/v6/latest/USD" target="_blank" rel="noopener">ExchangeRate API</a></p>
+<p class="note">Источники: <a href="https://backpow.com/api" target="_blank" rel="noopener">BackPoW</a> · <a href="https://docs.coingecko.com/reference/simple-price" target="_blank" rel="noopener">CoinGecko</a> · <a href="https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints" target="_blank" rel="noopener">Binance</a> · <a href="https://mempool.space/docs/api/rest" target="_blank" rel="noopener">Mempool.space</a> · <a href="https://www.cbr-xml-daily.ru/daily_json.js" target="_blank" rel="noopener">CBR-XML-Daily</a> · <a href="https://open.er-api.com/v6/latest/USD" target="_blank" rel="noopener">ExchangeRate API</a></p>
 </main><script>
 (()=>{'use strict';const tg=window.Telegram&&window.Telegram.WebApp;if(tg){tg.ready();tg.expand()}const $=id=>document.getElementById(id);
 const coins={
@@ -342,7 +342,6 @@ async function loadMarket(){
  try{
   const jobs=[
    fetchJson('https://api.coingecko.com/api/v3/simple/price?ids='+encodeURIComponent(ids)+'&vs_currencies=usd'),
-   fetchJson('https://coincalculators.io/api/coins.json').catch(()=>fetchJson('https://coincalculators.io/api/proxy.php')),
    fetchJson('https://www.cbr-xml-daily.ru/daily_json.js').catch(()=>fetchJson('https://open.er-api.com/v6/latest/USD')),
    fetchJson('https://mempool.space/api/v1/mining/hashrate/1m'),
    ...backpowTags.map(fetchBackpow),
@@ -374,25 +373,8 @@ async function loadMarket(){
    if(state.priceDataSource[selectedTag]!=='manual'&&state.prices[selectedTag])$('coinPrice').value=state.prices[selectedTag];
    sourceOk.prices=!!state.prices[selectedTag];
   }
-  if(results[1].status==='fulfilled'){
-   const data=results[1].value;
-   const rows=Array.isArray(data)?data:(Array.isArray(data.coins)?data.coins:(data.coins&&typeof data.coins==='object'?Object.entries(data.coins).map(([name,value])=>({name,...value})):Array.isArray(data.data)?data.data:[]));
-   if(rows.length){
-    const normalized=rows.map(x=>normalizeCoinRecord(x,x.tag||x.symbol||x.ticker,x.name)).filter(Boolean);
-    if(normalized.length){
-     state.networkCoins=normalized;
-     for(const rec of normalized){
-      const tag=String(rec.tag||'').toUpperCase();
-      if(backpowNames[tag]&&parseMetric(rec.nethash)>0){
-       state.networkFetchedAt[tag]=now;state.networkDataSource[tag]='CoinCalculators';
-      }
-     }
-     state.networkUpdated=new Date(now);sourceOk.network=true;
-    }
-   }
-  }
   backpowTags.forEach((tag,index)=>{
-   const result=results[4+index];
+   const result=results[3+index];
    if(result.status!=='fulfilled'||!result.value)return;
    const rec=normalizeCoinRecord(result.value,tag,coins[tag]?.name||tag);
    if(!rec||!(parseMetric(rec.nethash)>0))return;
@@ -404,7 +386,7 @@ async function loadMarket(){
    sourceOk.backpow.push(tag);
   });
   if(sourceOk.backpow.length){state.networkUpdated=new Date(now);sourceOk.network=true;}
-  const exchangeStart=4+backpowTags.length;
+  const exchangeStart=3+backpowTags.length;
   exchangeTags.forEach((tag,index)=>{
    const result=results[exchangeStart+index];
    if(result.status!=='fulfilled'||!result.value)return;
@@ -415,8 +397,8 @@ async function loadMarket(){
    if(tag===selectedTag)$('coinPrice').value=price;
    sourceOk.prices=true;
   });
-  if(results[3].status==='fulfilled'){
-   const payload=results[3].value;
+  if(results[1].status==='fulfilled'){
+   const payload=results[2].value;
    const series=Array.isArray(payload.hashrates)?payload.hashrates:[];
    const latest=[...series].reverse().find(x=>Number(x.avgHashrate)>0);
    const currentHash=Number(payload.currentHashrate)>0?Number(payload.currentHashrate):Number(latest?.avgHashrate);
@@ -427,7 +409,7 @@ async function loadMarket(){
    }
   }
   if(results[2].status==='fulfilled'){
-   const fx=Number(results[2].value.Valute?.USD?.Value||results[2].value.rates?.RUB);
+   const fx=Number(results[1].value.Valute?.USD?.Value||results[1].value.rates?.RUB);
    if(fx>0){state.fx=fx;$('usdRub').value=state.fx;state.fxUpdatedAt=now;sourceOk.fx=true;}
   }
   if(!(state.fx>0)&&num('usdRub')>0)state.fx=num('usdRub');
