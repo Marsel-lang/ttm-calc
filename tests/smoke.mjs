@@ -39,11 +39,14 @@ assert.ok(script.includes("else{delete state.prices[tag];delete state.priceFetch
 assert.ok(script.includes("state.fxManual=true"), 'A manually entered FX rate must not be overwritten by automatic FX refresh');
 assert.ok(script.includes("state.fxManual=false;state.fx=0"), 'Clearing manual FX must restore automatic FX mode');
 assert.ok(!script.includes("['iBeLink BM-K1 Max','iBeLink','CKB'"), 'Kadena BM-K1 Max must not be listed as a CKB miner');
-for (const model of ['Antminer S23 Hyd 3U','Antminer S21 Pro','Antminer Z15 K','IceRiver KS7 Lite','IceRiver AL2 Lite','IceRiver AE3']) {
+for (const model of ['Antminer S23 Hyd 3U','Antminer S21 Pro','Antminer Z15 K','Antminer KS5','IceRiver KS7 Lite','IceRiver AL2 Lite','IceRiver AE3']) {
   assert.ok(script.includes(model), `Missing ASIC model: ${model}`);
 }
 assert.ok(script.includes("'1160','TH',11020"), 'S23 Hyd 3U must be 1160 TH/s, not PH/s');
 assert.ok(script.includes("'525','KSOL',2483"), 'Z15 K must be 525 kSol/s at 2483 W');
+assert.ok(script.includes("['Antminer KS5','Bitmain','KAS','20','TH',3000]"), '20 TH/s KS5 must be attributed to Bitmain, not IceRiver');
+assert.ok(!script.includes("['IceRiver KS5','IceRiver','KAS'"), 'There is no IceRiver KS5 model in this catalog');
+assert.ok(script.includes("['Antminer L7','Bitmain','LTC','9.5','GH',3420]"), 'Antminer L7 standard 9.5G model must use the official 3420 W rating');
 assert.ok(script.includes("if(tag==='ALPH'&&networkSource!=='BackPoW')return null"), 'Alephium auto-estimates must use the validated aggregate-chain source');
 assert.ok(script.includes("requestId!==state.marketRequestId||selectedTag!==$('coinSelect').value"), 'Stale market responses must be ignored');
 assert.ok(script.includes("$('grossRevenue').value=''"), 'Manual revenue must clear on coin change');
