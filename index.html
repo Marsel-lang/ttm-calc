@@ -232,7 +232,8 @@ function normalizeCoinRecord(raw,tag,name){
   block_time:pick('block_time','blockTime','block_time_s','Block time','blocktime','avgBlockTime'),
   block_reward24:reward24,
   block_reward:reward,
-  exchange_rate:pick('exchange_rate','btc_exchange_rate','price_btc','priceInBtc')
+  exchange_rate:pick('exchange_rate','btc_exchange_rate','price_btc','priceInBtc'),
+  price_usd:pick('price_usd','priceUsd','usdPrice')
  };
  if(!record.nethash&&record.difficulty&&record.block_time&&(['BTC','BCH'].includes(record.tag)||/sha.?256/i.test(String(record.algorithm)))){
   const diff=parseMetric(record.difficulty),seconds=parseSeconds(record.block_time);
@@ -252,11 +253,15 @@ function updateNetworkDisplay(tag){
 }
 function estimateUnsupportedReason(tag){
  const c=findNetwork(tag);
- // CKB and ALEO can be estimated only when the source explicitly marks the reward as the miner/prover payout.
- if(['CKB','ALEO'].includes(tag)&&String(c?.emission?.oracleRewardBasis||'').toLowerCase()!=='miner'){
-  return tag==='CKB'
-   ?'Нет подтверждённой доли награды майнера CKB. Автоматическая оценка отключена до получения корректных сетевых данных.'
-   :'Нет подтверждённой доли награды prover для ALEO. Автоматическая оценка отключена до получения корректных сетевых данных.';
+ const emission=c?.emission||{};
+ const basis=String(emission.oracleRewardBasis||'').toLowerCase();
+ // ALEO prover rewards are not safely derivable from generic block rewards.
+ // BackPoW currently marks its ALEO emission as needing live pool/prover input.
+ if(tag==='ALEO'&&(basis!=='miner'||emission.status!=='ok'||!(Number(emission.observedReward)>0))){
+  return 'Нет подтверждённой актуальной награды prover для ALEO. Автоматическая оценка отключена до получения проверенных сетевых данных.';
+ }
+ if(tag==='CKB'&&(basis!=='miner'||emission.status!=='ok'||!(Number(emission.observedReward)>0))){
+  return 'Нет подтверждённой фактической награды майнера CKB. Автоматическая оценка отключена до получения проверенных сетевых данных.';
  }
  return '';
 }
@@ -271,7 +276,8 @@ function estimateCoinDaily(tag,hashH){
  if(state.priceFetchedAt&&priceSource!=='manual'&&(!priceFetchedAt||Date.now()-priceFetchedAt>10*60*1000))return null;
  let net=parseMetric(c.nethash??c.network_hashrate??c.networkHashrate??c.hashrate??c.avgHashrate);
  const blockTime=parseSeconds(c.block_time??c.blocktime??c.blockTime??c.block_time_s??c.avgBlockTime);
- const reward=parseMetric(c.block_reward24??c.block_reward??c.reward??c.blockReward??c.reward24);
+ const observedReward=String(c.emission?.status||'')==='ok'?parseMetric(c.emission?.observedReward):NaN;
+ const reward=observedReward>0?observedReward:parseMetric(c.block_reward24??c.block_reward??c.reward??c.blockReward??c.reward24);
  const priceBtc=parseMetric(c.exchange_rate??c.price_btc??c.priceInBtc??c.btc_exchange_rate);
  const marketPrice=Number(state.prices[tag]||0);
  const priceUsd=marketPrice>0?marketPrice:(tag==='BTC'?state.btcUsd:(priceBtc>0&&state.btcUsd>0?priceBtc*state.btcUsd:parseMetric(c.price_usd??c.priceUsd)));
