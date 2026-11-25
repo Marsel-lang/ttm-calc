@@ -76,6 +76,7 @@ const estimateFns = between('function estimateUnsupportedReason(tag,device=null)
 const revenueFn = between('function estimateAleoDevice(hashH,device){', 'async function loadMarket(){');
 const profitFn = between('function calculateDailyProfit(', 'function calc(){');
 const fxFn = between('function fxIsFresh(){', 'const toUsd=');
+const dailyYieldFn = between('function dailyCoinYield(', 'function calc(){');
 
 const networks = {
   BTC: {tag:'BTC',nethash:966e18,block_time:600,block_reward:3.125,emission:{oracleRewardBasis:'total',minerShare:1,status:'ok',subsidyNow:3.125,observedReward:3.14}},
@@ -100,8 +101,14 @@ const context = {
   findNetwork: tag => networks[tag] || null
 };
 vm.createContext(context);
-vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn + fxFn, context);
+context.fmt=(n,d=2)=>Number(n).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});
+vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn + fxFn + dailyYieldFn, context);
 
+assert.equal(context.dailyCoinYield({coins:0.086291},'BTC',0,false),'≈ 0,000000 BTC / день','Displayed coin/day must be zero when uptime is zero');
+assert.equal(context.dailyCoinYield({coins:0.086291},'BTC',100,false),'≈ 0,086291 BTC / день','Displayed coin/day must show the full daily yield at 100% uptime');
+assert.equal(context.dailyCoinYield({coins:1.25,dogeCoins:1250,components:{LTC:{},DOGE:{}}},'LTC',0,false),'≈ 0,000000 LTC + 0,00 DOGE / день','Both merged-mining yields must scale to zero at zero uptime');
+assert.equal(context.dailyCoinYield({coins:1.25,dogeCoins:1250,components:{LTC:{},DOGE:{}}},'LTC',50,false),'≈ 0,625000 LTC + 625,00 DOGE / день','Both merged-mining yields must scale with uptime');
+assert.equal(context.dailyCoinYield({coins:1.25},'BTC',100,true),'—','Manual revenue override must continue hiding estimated coin yield');
 assert.equal(context.parseMetric('2,5 TH/s'), 2.5e12);
 assert.equal(context.parseMetric('966 EH/s'), 966e18);
 assert.equal(context.parseMetric('3.04P'), 3.04e15);
