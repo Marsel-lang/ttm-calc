@@ -25,6 +25,7 @@ assert.deepEqual(coinTags, ['BTC','BCH','LTC','KAS','ALPH','ZEC','ETC','DASH','C
 
 const deviceRows = [...script.matchAll(/\['[^']+','[^']+','[^']+','[^']+','[^']+',\d+\]/g)];
 assert.ok(deviceRows.length >= 65, `Expected broad ASIC catalogue, found ${deviceRows.length}`);
+assert.ok(!script.includes("['iBeLink BM-K1 Max','iBeLink','CKB'"), 'Kadena BM-K1 Max must not be listed as a CKB miner');
 for (const model of ['Antminer S23 Hyd 3U','Antminer S21 Pro','Antminer Z15 K','IceRiver KS7 Lite','IceRiver AL2 Lite','IceRiver AE3']) {
   assert.ok(script.includes(model), `Missing ASIC model: ${model}`);
 }
