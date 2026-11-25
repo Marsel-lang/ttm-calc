@@ -145,7 +145,7 @@ const devices=[
 // Etchash
 ['Jasminer X44-P','Jasminer','ETC','23.4','GH',2550],['Jasminer X16-Q','Jasminer','ETC','1.95','GH',620],['iPollo V2','iPollo','ETC','10','GH',1500],['Jasminer X4-1U','Jasminer','ETC','520','MH',240],
 // X11
-['Antminer D9','Bitmain','DASH','1770','GH',2839],['Antminer D7','Bitmain','DASH','1286','GH',3148],['iBeLink DM22G','iBeLink','DASH','22','GH',1650],
+['Antminer D9','Bitmain','DASH','1770','GH',2839],['Antminer D7','Bitmain','DASH','1286','GH',3148],['iBeLink DM22G','iBeLink','DASH','22','GH',810],
 // Eaglesong
 ['Antminer K7','Bitmain','CKB','63.5','TH',3080],['iBeLink BM-K1 Max','iBeLink','CKB','16','TH',1350],
 // Aleo zkSNARK
@@ -159,7 +159,7 @@ $('deviceInput').addEventListener('change',()=>{const found=compatible().find(d=
 $('outputCurrency').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{state.output=b.dataset.value;$('outputCurrency').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));calc()}));document.querySelectorAll('.currency:not(#outputCurrency)').forEach(g=>g.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{state.currency[g.dataset.currency]=b.dataset.value;g.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));calc()})));
 function hashToH(d){const u=d.unit;const h=d.hash;if(u==='PH')return h*1e15;if(u==='TH')return h*1e12;if(u==='GH')return h*1e9;if(u==='MH')return h*1e6;if(u==='KH')return h*1e3;if(u==='KSOL')return h*1e3;return h}function customDevice(){let unit=$('customUnit').value;return {hash:num('customHash'),unit,w:num('customW'),coins:[$('coinSelect').value],name:'Своя модель'}}
 function clearIncomeResults(message='Нет данных дохода'){ $('profit').textContent=message;$('profit').className='big';['income','poolCost','electricCost','extraCost','monthProfit','yearProfit','coinDay','recovered'].forEach(id=>$(id).textContent='—');$('payback').textContent=num('asicPrice')?'—':'Укажи цену ASIC';const watts=state.selected?state.selected.w:num('customW');const uptime=Math.min(100,Math.max(1,num('uptime')))/100;$('powerDay').textContent=fmt(watts/1000*24*uptime,2)+' kWh'}
-function calc(){const d=current()||customDevice();const custom=!state.selected;const watts=custom?num('customW'):d.w;const h=custom?hashToH({hash:num('customHash'),unit:$('customUnit').value}):hashToH(d);const fee=Math.min(100,num('poolFee'))/100,uptime=Math.min(100,Math.max(1,num('uptime')))/100;const electricity=toUsd(num('electricity'),state.currency.electricity),extra=toUsd(num('extraMonthly'),state.currency.extraMonthly);const grossManual=num('grossRevenue');const selectedTag=$('coinSelect').value;const liveEstimate=estimateRevenue(selectedTag,h);const live=liveEstimate?liveEstimate.usd:null;const revenue=grossManual>0?grossManual:live;updateNetworkDisplay(selectedTag);if(!(h>0&&watts>0)){clearIncomeResults('Укажи хешрейт и мощность ASIC');return}const ready=Number.isFinite(electricity)&&Number.isFinite(extra)&&watts>=0;if(!ready){clearIncomeResults('Проверь курс валют');return}if(!(Number.isFinite(revenue)&&revenue>=0)){clearIncomeResults('Нет данных дохода');return}const gross=revenue*uptime,pool=gross*fee,electric=watts/1000*24*uptime*electricity,extraDay=extra/30,net=gross-pool-electric-extraDay,month=net*30,year=net*365;$('profit').textContent=display(net);$('profit').className='big '+(net>=0?'positive':'negative');$('income').textContent=display(gross);$('poolCost').textContent=display(pool);$('electricCost').textContent=display(electric);$('extraCost').textContent=display(extraDay);$('monthProfit').textContent=display(month);$('yearProfit').textContent=display(year);const coinPrice=Number($('coinPrice').value)||state.prices[selectedTag]||0;$('coinDay').textContent=liveEstimate&&grossManual===0?(selectedTag==='LTC'?'≈ '+(liveEstimate.components.LTC?fmt(liveEstimate.coins,6)+' LTC':'— LTC')+' + '+(liveEstimate.components.DOGE?fmt(liveEstimate.dogeCoins,2)+' DOGE':'— DOGE')+' / день':'≈ '+fmt(liveEstimate.coins,6)+' '+selectedTag+' / день'):'—';$('powerDay').textContent=fmt(watts/1000*24*uptime,2)+' kWh';
+function calc(){const d=current()||customDevice();const custom=!state.selected;const watts=custom?num('customW'):d.w;const h=custom?hashToH({hash:num('customHash'),unit:$('customUnit').value}):hashToH(d);const fee=Math.min(100,num('poolFee'))/100,uptime=Math.min(100,Math.max(1,num('uptime')))/100;const electricity=toUsd(num('electricity'),state.currency.electricity),extra=toUsd(num('extraMonthly'),state.currency.extraMonthly);const grossManual=num('grossRevenue');const selectedTag=$('coinSelect').value;const liveEstimate=estimateRevenue(selectedTag,h,d);const live=liveEstimate?liveEstimate.usd:null;const revenue=grossManual>0?grossManual:live;updateNetworkDisplay(selectedTag);if(!(h>0&&watts>0)){clearIncomeResults('Укажи хешрейт и мощность ASIC');return}const ready=Number.isFinite(electricity)&&Number.isFinite(extra)&&watts>=0;if(!ready){clearIncomeResults('Проверь курс валют');return}if(!(Number.isFinite(revenue)&&revenue>=0)){clearIncomeResults('Нет данных дохода');return}const gross=revenue*uptime,pool=gross*fee,electric=watts/1000*24*uptime*electricity,extraDay=extra/30,net=gross-pool-electric-extraDay,month=net*30,year=net*365;$('profit').textContent=display(net);$('profit').className='big '+(net>=0?'positive':'negative');$('income').textContent=display(gross);$('poolCost').textContent=display(pool);$('electricCost').textContent=display(electric);$('extraCost').textContent=display(extraDay);$('monthProfit').textContent=display(month);$('yearProfit').textContent=display(year);const coinPrice=Number($('coinPrice').value)||state.prices[selectedTag]||0;$('coinDay').textContent=liveEstimate&&grossManual===0?(selectedTag==='LTC'?'≈ '+(liveEstimate.components.LTC?fmt(liveEstimate.coins,6)+' LTC':'— LTC')+' + '+(liveEstimate.components.DOGE?fmt(liveEstimate.dogeCoins,2)+' DOGE':'— DOGE')+' / день':'≈ '+fmt(liveEstimate.coins,6)+' '+selectedTag+' / день'):'—';$('powerDay').textContent=fmt(watts/1000*24*uptime,2)+' kWh';
  const priceUsd=toUsd(num('asicPrice'),state.currency.asicPrice);if(num('asicPrice')>0&&net>0&&priceUsd>0){$('payback').textContent=fmt(priceUsd/net,0)+' дн. ('+fmt(priceUsd/net/30.4375,1)+' мес.)';$('recovered').textContent=fmt(year/priceUsd*100,0)+'%'}else{$('payback').textContent=num('asicPrice')?'—':'Укажи цену ASIC';$('recovered').textContent='—'}}
 function findNetwork(tag){
  if(tag==='BTC'&&state.btcNetwork&&state.networkDataSource?.BTC==='Mempool.space')return state.btcNetwork;
@@ -251,14 +251,18 @@ function updateNetworkDisplay(tag){
  if(net>0){$('networkHash').value=formatHashrate(net);$('networkHash').dataset.raw=String(net);$('networkHashHint').textContent='Источник: '+(c?.source||'сетевые данные')+' · '+(c?.name||c?.tag||tag)+'. Хешрейт сети — оценка, обновляется автоматически. Данные BackPoW обновляются ежедневно.';}
  else{$('networkHash').value='Нет данных';delete $('networkHash').dataset.raw;$('networkHashHint').textContent='Источник пока не предоставил хешрейт для этой сети; доход не рассчитывается по выдуманным значениям.';}
 }
-function estimateUnsupportedReason(tag){
+function estimateUnsupportedReason(tag,device=null){
  const c=findNetwork(tag);
  const emission=c?.emission||{};
  const basis=String(emission.oracleRewardBasis||'').toLowerCase();
  // ALEO prover rewards are not safely derivable from generic block rewards.
  // BackPoW currently marks its ALEO emission as needing live pool/prover input.
- if(tag==='ALEO'&&(basis!=='miner'||emission.status!=='ok'||!(Number(emission.observedReward)>0))){
-  return 'Нет подтверждённой актуальной награды prover для ALEO. Автоматическая оценка отключена до получения проверенных сетевых данных.';
+ if(tag==='ALEO'){
+  const normalize=name=>String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const model=Array.isArray(c?.ASICS)?c.ASICS.find(x=>normalize(x.name)===normalize(device?.name)):null;
+  if(emission.status!=='needs_live_input'||!model||!(Number(model.revenue)>0)||!(Number(model.revenueAt)>0)){
+   return 'Нет подтверждённой доходности prover для выбранной модели ALEO. Для этой модели пока нет проверенного источника.';
+  }
  }
  if(tag==='CKB'&&(basis!=='miner'||emission.status!=='ok'||!(Number(emission.observedReward)>0))){
   return 'Нет подтверждённой фактической награды майнера CKB. Автоматическая оценка отключена до получения проверенных сетевых данных.';
@@ -309,8 +313,32 @@ function estimateCoinDaily(tag,hashH){
  if(!Number.isFinite(usd)||usd<0||!Number.isFinite(dailyCoins))return null;
  return {usd,coins:dailyCoins,price:priceUsd,raw:c,networkHash:net,blockTime:effectiveBlockTime,reward:minerReward};
 }
-function estimateRevenue(tag,hashH){
+function estimateAleoDevice(hashH,device){
+ const c=findNetwork('ALEO');
+ const normalize=name=>String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ const row=Array.isArray(c?.ASICS)?c.ASICS.find(x=>normalize(x.name)===normalize(device?.name)):null;
+ if(!row)return null;
+ const sourceHash=parseMetric(row.hashrate),sourceWatts=parseMetric(row.watts);
+ const sourceRevenue=parseMetric(row.revenue),sourcePrice=parseMetric(row.revenueAt);
+ if(!(sourceHash>0&&sourceWatts>0&&sourceRevenue>0&&sourcePrice>0))return null;
+ if(Math.abs(hashH-sourceHash)/sourceHash>0.03)return null;
+ if(device?.w>0&&Math.abs(device.w-sourceWatts)/sourceWatts>0.03)return null;
+ const networkFetchedAt=Number(state.networkFetchedAt?.ALEO||0);
+ const networkSource=state.networkDataSource?.ALEO||'';
+ if(state.networkFetchedAt&&(!networkFetchedAt||Date.now()-networkFetchedAt>(networkSource==='BackPoW'?26:0.25)*60*60*1000))return null;
+ const priceFetchedAt=Number(state.priceFetchedAt?.ALEO||0),priceSource=state.priceDataSource?.ALEO||'';
+ const marketPrice=Number(state.prices.ALEO||0);
+ const fallbackPrice=parseMetric(c?.price_usd??c?.priceUsd??c?.usdPrice);
+ const priceFresh=priceSource==='manual'||(priceFetchedAt>0&&Date.now()-priceFetchedAt<=10*60*1000);
+ const priceUsd=priceFresh&&marketPrice>0?marketPrice:fallbackPrice;
+ if(!(priceUsd>0))return null;
+ const usd=sourceRevenue*(priceUsd/sourcePrice);
+ if(!Number.isFinite(usd)||usd<0)return null;
+ return {usd,coins:usd/priceUsd,price:priceUsd,raw:c,networkHash:parseMetric(c?.nethash),blockTime:parseSeconds(c?.block_time),rewardBasis:'BackPoW ASIC benchmark'};
+}
+function estimateRevenue(tag,hashH,device=null){
  if(!(hashH>0))return null;
+ if(tag==='ALEO')return estimateAleoDevice(hashH,device);
  if(tag==='LTC'){
   const l=estimateCoinDaily('LTC',hashH),d=estimateCoinDaily('DOGE',hashH);
   if(!l&&!d)return null;
@@ -422,7 +450,7 @@ async function loadMarket(){
   if(num('coinPrice')>0&&state.priceDataSource[selectedTag]==='manual'){state.prices[selectedTag]=num('coinPrice');if(selectedTag==='BTC')state.btcUsd=num('coinPrice');}
   updateNetworkDisplay(selectedTag);
   const d=current()||customDevice();
-  const estimate=estimateRevenue(selectedTag,hashToH(d));
+  const estimate=estimateRevenue(selectedTag,hashToH(d),d);
   const matched=findNetwork(selectedTag);
   const networkAge=now-Number(state.networkFetchedAt[selectedTag]||0);
   const networkSource=state.networkDataSource[selectedTag]||'';
@@ -447,7 +475,7 @@ async function loadMarket(){
    const priceCheck=hasExchangeQuote&&allPriceReferences?(maxDeviation>5?' · расхождение с CoinGecko '+fmt(maxDeviation,1)+'%':' · сверено с CoinGecko'):'';
    $('status').textContent='Автоматическая оценка рассчитана по '+networkSource+'; цена '+priceSources+priceCheck+'. Фактический доход может отличаться.';
   }else{
-   const unsupported=estimateUnsupportedReason(selectedTag);
+   const unsupported=estimateUnsupportedReason(selectedTag,d);
    if(unsupported)$('status').textContent=unsupported;
    else if(!networkFresh)$('status').textContent='Нет свежих сетевых данных для '+selectedTag+'. Автоматический расчёт отключён до успешного обновления.';
    else if(!priceFresh)$('status').textContent='Нет свежей рыночной цены. Проверь соединение или введи цену вручную.';
