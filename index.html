@@ -285,7 +285,10 @@ function estimateCoinDaily(tag,hashH){
  const reward=observedReward>0?observedReward:parseMetric(c.block_reward24??c.block_reward??c.reward??c.blockReward??c.reward24);
  const priceBtc=parseMetric(c.exchange_rate??c.price_btc??c.priceInBtc??c.btc_exchange_rate);
  const marketPrice=Number(state.prices[tag]||0);
- const priceUsd=priceIsFresh&&marketPrice>0?marketPrice:(backpowPrice>0?backpowPrice:(tag==='BTC'?state.btcUsd:(priceBtc>0&&state.btcUsd>0?priceBtc*state.btcUsd:NaN)));
+ const btcFetchedAt=Number(state.priceFetchedAt?.BTC||0),btcSource=state.priceDataSource?.BTC||'';
+ const btcPriceFresh=btcSource==='manual'||(btcFetchedAt>0&&Date.now()-btcFetchedAt<=10*60*1000);
+ const btcPrice=btcPriceFresh?Number(state.btcUsd||state.prices.BTC||0):NaN;
+ const priceUsd=priceIsFresh&&marketPrice>0?marketPrice:(backpowPrice>0?backpowPrice:(priceBtc>0&&btcPrice>0?priceBtc*btcPrice:(tag==='BTC'&&btcPrice>0?btcPrice:NaN)));
  const algo=String(c.algorithm||c.algo||coins[tag]?.algo||'').toLowerCase();
  if(!(net>0)&&blockTime>0){
   const diff=parseMetric(c.difficulty);
