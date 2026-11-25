@@ -532,7 +532,14 @@ function installNumberArrows(){
   const controls=document.createElement('span');controls.className='number-arrows';controls.setAttribute('aria-label','Изменить значение');
   const up=document.createElement('button');up.type='button';up.innerHTML='&#9652;';up.setAttribute('aria-label','Увеличить');
   const down=document.createElement('button');down.type='button';down.innerHTML='&#9662;';down.setAttribute('aria-label','Уменьшить');
-  function change(dir){if(input.disabled||input.readOnly)return;const step=input.step==='any'?1:(Number(input.step)||1);const current=input.value===''?(Number(input.min)||0):Number(input.value);let next=current+dir*step;const min=input.min!==''?Number(input.min):-Infinity;const max=input.max!==''?Number(input.max):Infinity;next=Math.min(max,Math.max(min,next));const decimals=(String(step).split('.')[1]||'').length;input.value=String(Number(next.toFixed(Math.min(8,decimals+2))));input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));}
+  function numberInputStep(input,current){
+   if(input.step!=='any'){const configured=Number(input.step);if(configured>0)return configured}
+   const presets={electricity:0.1,poolFee:0.1,uptime:1,customW:10,grossRevenue:0.1,usdRub:0.01};
+   if(presets[input.id])return presets[input.id];
+   if(Number.isFinite(current)&&current!==0)return Math.pow(10,Math.floor(Math.log10(Math.abs(current)))-2);
+   return ({customHash:1,asicPrice:1000,extraMonthly:100,coinPrice:0.000001})[input.id]||1;
+  }
+  function change(dir){if(input.disabled||input.readOnly)return;const current=input.value===''?(Number(input.min)||0):Number(input.value);const step=numberInputStep(input,current);let next=current+dir*step;const min=input.min!==''?Number(input.min):-Infinity;const max=input.max!==''?Number(input.max):Infinity;next=Math.min(max,Math.max(min,next));const decimals=(String(step).split('.')[1]||'').length;input.value=String(Number(next.toFixed(Math.min(8,decimals+2))));input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));}
   up.addEventListener('click',()=>change(1));down.addEventListener('click',()=>change(-1));controls.append(up,down);wrap.appendChild(controls);
  });
 }
