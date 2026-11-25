@@ -43,7 +43,8 @@ for (const d of parsedDevices) {
   assert.ok(['TH','PH','GH','MH','KSOL','KH'].includes(d.unit), `Unknown hashrate unit: ${d.name}`);
   assert.ok(d.coins.length > 0 && d.coins.every(tag => coinTags.includes(tag)), `Invalid coin mapping: ${d.name}`);
 }
-assert.equal(parsedDevices.length, 70, 'Current reviewed ASIC catalogue should contain 70 distinct models');
+assert.equal(parsedDevices.length, 69, 'Current reviewed ASIC catalogue should contain 69 distinct compatible models');
+assert.ok(!script.includes("['iBeLink BM-N1','iBeLink','CKB'"), 'Blake2s BM-N1 must not be listed as an Eaglesong CKB miner');
 assert.ok(script.includes("const grossManualSet=$('grossRevenue').value.trim()!==''"), 'An explicitly entered zero gross revenue must be treated as a manual override');
 assert.ok(script.includes("if($('grossRevenue').value.trim()!==''") , 'Manual revenue status must distinguish blank from zero');
 assert.ok(script.includes("else{delete state.prices[tag];delete state.priceFetchedAt[tag];delete state.priceDataSource[tag];"), 'Clearing manual coin price must restore automatic pricing');
