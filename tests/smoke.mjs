@@ -47,6 +47,8 @@ assert.ok(script.includes("if($('grossRevenue').value.trim()!==''") , 'Manual re
 assert.ok(script.includes("else{delete state.prices[tag];delete state.priceFetchedAt[tag];delete state.priceDataSource[tag];"), 'Clearing manual coin price must restore automatic pricing');
 assert.ok(script.includes("state.fxManual=true"), 'A manually entered FX rate must not be overwritten by automatic FX refresh');
 assert.ok(script.includes("state.fxManual=false;state.fx=0"), 'Clearing manual FX must restore automatic FX mode');
+assert.ok(script.includes('const sourceTime=Number(payload.time_last_update_unix)>0?Number(payload.time_last_update_unix)*1000:Date.parse(payload.Timestamp||payload.Date)'), 'FX freshness must use the provider timestamp, not only the local fetch time');
+assert.ok(script.includes('sourceAge<=36*60*60*1000'), 'Old FX source payloads must be rejected');
 assert.ok(!script.includes("['iBeLink BM-K1 Max','iBeLink','CKB'"), 'Kadena BM-K1 Max must not be listed as a CKB miner');
 for (const model of ['Antminer S23 Hyd 3U','Antminer S21 Pro','Antminer Z15 K','Antminer KS5','IceRiver KS7 Lite','IceRiver AL2 Lite','IceRiver AE3']) {
   assert.ok(script.includes(model), `Missing ASIC model: ${model}`);
