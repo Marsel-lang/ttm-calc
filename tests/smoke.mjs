@@ -46,6 +46,7 @@ const hashFn = between('function hashToH(d){', 'function customDevice(){');
 const findFn = between('function findNetwork(tag){', 'function parseMetric(v){');
 const estimateFns = between('function estimateUnsupportedReason(tag,device=null){', 'function estimateAleoDevice(hashH,device){');
 const revenueFn = between('function estimateAleoDevice(hashH,device){', 'async function loadMarket(){');
+const profitFn = between('function calculateDailyProfit(', 'function calc(){');
 
 const networks = {
   BTC: {tag:'BTC',nethash:966e18,block_time:600,block_reward:3.125},
@@ -70,7 +71,7 @@ const context = {
   findNetwork: tag => networks[tag] || null
 };
 vm.createContext(context);
-vm.runInContext(findFn + parseFns + hashFn + estimateFns + revenueFn, context);
+vm.runInContext(findFn + parseFns + hashFn + estimateFns + revenueFn + profitFn, context);
 
 assert.equal(context.parseMetric('2,5 TH/s'), 2.5e12);
 assert.equal(context.parseMetric('966 EH/s'), 966e18);
@@ -99,6 +100,12 @@ assert.equal(context.findNetwork('LTC').nethash, 4, 'BackPoW LTC record must bea
 context.state.networkCoins = savedNetworkCoins;
 assert.equal(context.hashToH({hash:840,unit:'KSOL'}), 840000);
 
+const ckbSample = context.calculateDailyProfit(3.98,3080,0.02,1,5.5/82.313,0);
+assert.ok(Math.abs(ckbSample.net-(3.98-3.98*0.02-(3.08*24*5.5/82.313)))<1e-10, 'Net profit must subtract pool fee and electricity from gross revenue');
+assert.ok(ckbSample.net<0, 'CKB sample must show a loss when electricity exceeds gross revenue');
+const offline = context.calculateDailyProfit(3.98,3080,0.02,0,5.5/82.313,0);
+assert.equal(offline.gross,0, 'Zero uptime must produce zero mining revenue');
+assert.equal(offline.electric,0, 'Zero uptime must produce zero ASIC electricity consumption');
 const bch = context.estimateCoinDaily('BCH',234e12);
 assert.ok(bch && bch.usd > 0, 'BCH must use its own SHA-256 network and block reward');
 const kas = context.estimateCoinDaily('KAS',40e12);
