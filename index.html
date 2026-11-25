@@ -397,7 +397,7 @@ async function loadMarket(){
    if(tag===selectedTag)$('coinPrice').value=price;
    sourceOk.prices=true;
   });
-  if(results[1].status==='fulfilled'){
+  if(results[2].status==='fulfilled'){
    const payload=results[2].value;
    const series=Array.isArray(payload.hashrates)?payload.hashrates:[];
    const latest=[...series].reverse().find(x=>Number(x.avgHashrate)>0);
@@ -408,7 +408,7 @@ async function loadMarket(){
     sourceOk.bitcoin=true;sourceOk.network=true;
    }
   }
-  if(results[2].status==='fulfilled'){
+  if(results[1].status==='fulfilled'){
    const fx=Number(results[1].value.Valute?.USD?.Value||results[1].value.rates?.RUB);
    if(fx>0){state.fx=fx;$('usdRub').value=state.fx;state.fxUpdatedAt=now;sourceOk.fx=true;}
   }
