@@ -57,6 +57,7 @@ function between(start, end) {
 const parseFns = between('function parseMetric(v){', 'function formatHashrate(value){');
 const hashFn = between('function hashToH(d){', 'function customDevice(){');
 const findFn = between('function findNetwork(tag){', 'function parseMetric(v){');
+const normalizeFn = between('function normalizeCoinRecord(raw,tag,name){', 'function updateNetworkDisplay(tag){');
 const estimateFns = between('function estimateUnsupportedReason(tag,device=null){', 'function estimateAleoDevice(hashH,device){');
 const revenueFn = between('function estimateAleoDevice(hashH,device){', 'async function loadMarket(){');
 const profitFn = between('function calculateDailyProfit(', 'function calc(){');
@@ -72,7 +73,7 @@ const networks = {
   ZEC: {tag:'ZEC',nethash:36.14910666503059e9,block_time:24,block_reward24:0.42,emission:{oracleRewardBasis:'miner',minerShare:0.8}},
   DASH: {tag:'DASH',nethash:3.188109791242718e15,block_time:157.285,block_reward24:0.41,emission:{oracleRewardBasis:'miner',minerShare:0.2}},
   CKB: {tag:'CKB',nethash:75.00833379562404e15,block_time:10.086,block_reward24:685.45,emission:{oracleRewardBasis:'miner',minerShare:0.64057,status:'ok',observedReward:775.86}},
-  ALEO: {tag:'ALEO',nethash:4.128650163258353e12,block_time:9.58,block_reward24:24.659349,usdPrice:0.02820313,ASICS:[{name:'Iceriver AE3',hashrate:1995400000,watts:3400,revenue:3.0387038347417725,revenueAt:0.02820313}],emission:{oracleRewardBasis:'miner',status:'needs_live_input'}}
+  ALEO: {tag:'ALEO',nethash:4.128650163258353e12,block_time:9.58,block_reward24:24.659349,usdPrice:0.02820313,ASICS:[{name:'Iceriver AE0',hashrate:60000000,watts:100,revenue:0.09186686045554604,revenueAt:0.02820313},{name:'Iceriver AE1 Lite',hashrate:299910000,watts:500,revenue:0.4533364659041364,revenueAt:0.02820313},{name:'Iceriver AE2',hashrate:718056000,watts:1300,revenue:1.0966044169720786,revenueAt:0.02820313},{name:'Iceriver AE3',hashrate:1995400000,watts:3400,revenue:3.0387038347417725,revenueAt:0.02820313}],emission:{oracleRewardBasis:'miner',status:'needs_live_input'}}
 };
 const context = {
   Number, Math, Date, String, isFinite, parseFloat,
@@ -84,7 +85,7 @@ const context = {
   findNetwork: tag => networks[tag] || null
 };
 vm.createContext(context);
-vm.runInContext(findFn + parseFns + hashFn + estimateFns + revenueFn + profitFn, context);
+vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn, context);
 
 assert.equal(context.parseMetric('2,5 TH/s'), 2.5e12);
 assert.equal(context.parseMetric('966 EH/s'), 966e18);
@@ -94,6 +95,18 @@ assert.equal(context.parseMetric('685,45'), 685.45);
 assert.equal(context.parseMetric('0.000749'), 0.000749);
 assert.equal(context.parseMetric('1.25 PH/s'), 1.25e15);
 assert.equal(context.parseSeconds('250 ms'), 0.25);
+const normalizedCkb = context.normalizeCoinRecord({
+  Algorithm:'Eaglesong','Block time':10.086,'Bl. reward':775.86,'Bl. reward 24h':685.45,
+  Nethash:75.00833379562404e15,usdPrice:0.000749,
+  emission:{oracleRewardBasis:'miner',status:'ok',observedReward:775.86},
+  ASICS:[{name:'Bitmain Antminer K7',hashrate:63.68415e12,watts:3080}]
+},'CKB','Nervos');
+assert.equal(normalizedCkb.algorithm,'Eaglesong');
+assert.equal(normalizedCkb.block_reward24,685.45);
+assert.equal(normalizedCkb.nethash,75.00833379562404e15);
+assert.equal(normalizedCkb.price_usd,0.000749);
+assert.equal(normalizedCkb.emission.oracleRewardBasis,'miner');
+assert.equal(normalizedCkb.ASICS[0].watts,3080);
 assert.equal(context.hashToH({hash:1,unit:'PH'}), 1e15);
 assert.equal(context.hashToH({hash:1,unit:'TH'}), 1e12);
 assert.equal(context.hashToH({hash:1,unit:'GH'}), 1e9);
@@ -157,6 +170,15 @@ assert.ok(Math.abs(ckb.usd-expectedCkb)<0.001, 'CKB must use the 24-hour average
 const aleo = context.estimateRevenue('ALEO',2e9,{name:'IceRiver AE3',w:3400});
 assert.ok(aleo && Math.abs(aleo.usd-(3.0387038347*(2e9/1995400000)))<0.001, 'ALEO AE3 must scale the BackPoW device benchmark by exact hashrate and live price');
 assert.equal(context.estimateRevenue('ALEO',2e9,{name:'Custom device',w:3400}), null, 'ALEO custom devices must not be extrapolated from an unverified prover rate');
+for (const [name,hash,watts,revenue] of [
+  ['IceRiver AE0',60e6,100,0.09186686045554604],
+  ['IceRiver AE1 Lite',300e6,500,0.4533364659041364],
+  ['IceRiver AE2',720e6,1300,1.0966044169720786],
+  ['IceRiver AE3',2e9,3400,3.0387038347417725]
+]) {
+  const estimate = context.estimateRevenue('ALEO',hash,{name,w:watts});
+  assert.ok(estimate && Math.abs(estimate.usd-revenue*(hash/({ 'IceRiver AE0':60e6,'IceRiver AE1 Lite':299910000,'IceRiver AE2':718056000,'IceRiver AE3':1995400000 }[name])))<0.001, `ALEO benchmark mismatch for ${name}`);
+}
 assert.equal(context.estimateUnsupportedReason('CKB'), '', 'CKB should not show a manual-income warning when miner reward basis exists');
 assert.equal(context.estimateUnsupportedReason('ALEO',{name:'IceRiver AE3'}), '', 'ALEO should allow a source-verified exact ASIC benchmark');
 const dash = context.estimateCoinDaily('DASH',1.771239e12);
