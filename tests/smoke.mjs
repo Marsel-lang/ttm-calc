@@ -43,8 +43,8 @@ function between(start, end) {
 const parseFns = between('function parseMetric(v){', 'function formatHashrate(value){');
 const hashFn = between('function hashToH(d){', 'function customDevice(){');
 const findFn = between('function findNetwork(tag){', 'function parseMetric(v){');
-const estimateFns = between('function estimateUnsupportedReason(tag){', 'function estimateRevenue(tag,hashH){');
-const revenueFn = between('function estimateRevenue(tag,hashH){', 'async function loadMarket(){');
+const estimateFns = between('function estimateUnsupportedReason(tag,device=null){', 'function estimateAleoDevice(hashH,device){');
+const revenueFn = between('function estimateAleoDevice(hashH,device){', 'async function loadMarket(){');
 
 const networks = {
   BTC: {tag:'BTC',nethash:966e18,block_time:600,block_reward:3.125},
@@ -54,11 +54,11 @@ const networks = {
   ZEC: {tag:'ZEC',nethash:36.14910666503059e9,block_time:24,block_reward24:0.42,emission:{oracleRewardBasis:'miner',minerShare:0.8}},
   DASH: {tag:'DASH',nethash:3.188109791242718e15,block_time:157.285,block_reward24:0.41,emission:{oracleRewardBasis:'miner',minerShare:0.2}},
   CKB: {tag:'CKB',nethash:75.00833379562404e15,block_time:10.086,block_reward24:685.45,emission:{oracleRewardBasis:'miner',minerShare:0.64057}},
-  ALEO: {tag:'ALEO',nethash:4.128650163258353e12,block_time:9.58,block_reward24:24.659349,emission:{oracleRewardBasis:'miner'}}
+  ALEO: {tag:'ALEO',nethash:4.128650163258353e12,block_time:9.58,block_reward24:24.659349,usdPrice:0.02820313,ASICS:[{name:'Iceriver AE3',hashrate:1995400000,watts:3400,revenue:3.0387038347417725,revenueAt:0.02820313}],emission:{oracleRewardBasis:'miner',status:'needs_live_input'}}
 };
 const context = {
   Number, Math, Date, String, isFinite, parseFloat,
-  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.031487,ZEC:949.01,DASH:38.12,CKB:0.000749,ALEO:0.02820313},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{ALPH:'BackPoW',ZEC:'BackPoW',DASH:'BackPoW',CKB:'BackPoW',ALEO:'BackPoW'}},
+  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.031487,ZEC:949.01,DASH:38.12,CKB:0.000749,ALEO:0.02820313},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{ALPH:'BackPoW',ZEC:'BackPoW',DASH:'BackPoW',CKB:'BackPoW',ALEO:'BackPoW'},networkFetchedAt:{},priceFetchedAt:{},priceDataSource:{}},
   coins: {
     BTC:{algo:'SHA-256'},BCH:{algo:'SHA-256'},LTC:{algo:'Scrypt'},DOGE:{algo:'Scrypt'},
     ALPH:{algo:'Blake3'},ZEC:{algo:'Equihash'},DASH:{algo:'X11'},CKB:{algo:'Eaglesong'},ALEO:{algo:'zkSNARK'}
@@ -104,10 +104,11 @@ assert.equal(context.estimateCoinDaily('ALPH',399.64e9), null, 'ALPH must not us
 context.state.networkDataSource.ALPH = 'BackPoW';
 const ckb = context.estimateCoinDaily('CKB',63.5e12);
 assert.ok(ckb && ckb.usd > 0, 'CKB must calculate automatically from confirmed miner-reward basis');
-const aleo = context.estimateCoinDaily('ALEO',2e9);
-assert.ok(aleo && aleo.usd > 0, 'ALEO must calculate automatically from confirmed prover-reward basis');
+const aleo = context.estimateRevenue('ALEO',2e9,{name:'IceRiver AE3',w:3400});
+assert.ok(aleo && Math.abs(aleo.usd-3.0387038347)<0.001, 'ALEO AE3 must use the exact BackPoW device benchmark, scaled by the live price');
+assert.equal(context.estimateRevenue('ALEO',2e9,{name:'Custom device',w:3400}), null, 'ALEO custom devices must not be extrapolated from an unverified prover rate');
 assert.equal(context.estimateUnsupportedReason('CKB'), '', 'CKB should not show a manual-income warning when miner reward basis exists');
-assert.equal(context.estimateUnsupportedReason('ALEO'), '', 'ALEO should not show a manual-income warning when prover reward basis exists');
+assert.equal(context.estimateUnsupportedReason('ALEO',{name:'IceRiver AE3'}), '', 'ALEO should allow a source-verified exact ASIC benchmark');
 const dash = context.estimateCoinDaily('DASH',1.771239e12);
 const zec = context.estimateCoinDaily('ZEC',841512);
 assert.ok(dash && Math.abs(dash.usd-4.769913)<0.02, `DASH must use miner payout once: ${dash?.usd}`);
