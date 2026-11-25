@@ -23,7 +23,7 @@ const coinBlock = script.slice(coinStart, coinEnd);
 const coinTags = [...coinBlock.matchAll(/^\s*([A-Z]{2,5}):/gm)].map(m => m[1]);
 assert.deepEqual(coinTags, ['BTC','BCH','LTC','KAS','ALPH','ZEC','ETC','DASH','CKB','ALEO']);
 
-const deviceRows = [...script.matchAll(/\['[^']+','[^']+','[^']+','[^']+','[^']+',\d+\]/g)];
+const deviceRows = [...script.matchAll(/\['([^']+)','([^']+)','([^']+)','([^']+)','([^']+)',(\d+)\]/g)];
 assert.ok(deviceRows.length >= 65, `Expected broad ASIC catalogue, found ${deviceRows.length}`);
 const parsedDevices = deviceRows.map(m => ({name:m[1],brand:m[2],coins:m[3].split(','),hash:Number(m[4]),unit:m[5],watts:Number(m[6])}));
 assert.equal(new Set(parsedDevices.map(d => d.name)).size, parsedDevices.length, 'ASIC model names must be unique');
