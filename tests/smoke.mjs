@@ -58,7 +58,7 @@ const networks = {
 };
 const context = {
   Number, Math, Date, String, isFinite, parseFloat,
-  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.031487,ZEC:949.01,DASH:38.12,CKB:0.000749,ALEO:0.02820313},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{ALPH:'BackPoW',ZEC:'BackPoW',DASH:'BackPoW',CKB:'BackPoW',ALEO:'BackPoW'}},
+  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.031487,ZEC:949.01,DASH:38.12,CKB:0.000749,ALEO:0.02820313},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{ALPH:'BackPoW',ZEC:'BackPoW',DASH:'BackPoW',CKB:'BackPoW',ALEO:'BackPoW'},priceFetchedAt:{BTC:Date.now(),LTC:Date.now(),DOGE:Date.now(),ALPH:Date.now(),ZEC:Date.now(),DASH:Date.now(),CKB:Date.now(),ALEO:Date.now()},priceDataSource:{BTC:'CoinGecko',LTC:'CoinGecko',DOGE:'CoinGecko',ALPH:'CoinGecko',ZEC:'CoinGecko',DASH:'CoinGecko',CKB:'CoinGecko',ALEO:'CoinGecko'}},
   coins: {
     BTC:{algo:'SHA-256'},BCH:{algo:'SHA-256'},LTC:{algo:'Scrypt'},DOGE:{algo:'Scrypt'},
     ALPH:{algo:'Blake3'},ZEC:{algo:'Equihash'},DASH:{algo:'X11'},CKB:{algo:'Eaglesong'},ALEO:{algo:'zkSNARK'}
