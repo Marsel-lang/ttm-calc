@@ -53,12 +53,12 @@ const networks = {
   ALPH: {tag:'ALPH',nethash:4.649987319732508e15,block_time:0.54,block_reward24:0.14,emission:{oracleRewardBasis:'total',minerShare:1}},
   ZEC: {tag:'ZEC',nethash:36.14910666503059e9,block_time:24,block_reward24:0.42,emission:{oracleRewardBasis:'miner',minerShare:0.8}},
   DASH: {tag:'DASH',nethash:3.188109791242718e15,block_time:157.285,block_reward24:0.41,emission:{oracleRewardBasis:'miner',minerShare:0.2}},
-  CKB: {tag:'CKB',nethash:85.61e15,block_time:8,block_reward:266},
-  ALEO: {tag:'ALEO',nethash:1e15,block_time:1,block_reward:1}
+  CKB: {tag:'CKB',nethash:75.00833379562404e15,block_time:10.086,block_reward24:685.45,emission:{oracleRewardBasis:'miner',minerShare:0.64057}},
+  ALEO: {tag:'ALEO',nethash:4.128650163258353e12,block_time:9.58,block_reward24:24.659349,emission:{oracleRewardBasis:'miner'}}
 };
 const context = {
   Number, Math, Date, String, isFinite, parseFloat,
-  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.031487,ZEC:949.01,DASH:38.12,CKB:0.0009},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{ALPH:'BackPoW',ZEC:'BackPoW',DASH:'BackPoW'}},
+  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.031487,ZEC:949.01,DASH:38.12,CKB:0.000749,ALEO:0.02820313},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{ALPH:'BackPoW',ZEC:'BackPoW',DASH:'BackPoW',CKB:'BackPoW',ALEO:'BackPoW'}},
   coins: {
     BTC:{algo:'SHA-256'},BCH:{algo:'SHA-256'},LTC:{algo:'Scrypt'},DOGE:{algo:'Scrypt'},
     ALPH:{algo:'Blake3'},ZEC:{algo:'Equihash'},DASH:{algo:'X11'},CKB:{algo:'Eaglesong'},ALEO:{algo:'zkSNARK'}
@@ -102,9 +102,12 @@ assert.ok(alph && Math.abs(alph.usd-0.0602479582)<0.002, `ALPH estimate must mat
 context.state.networkDataSource.ALPH = 'CoinCalculators';
 assert.equal(context.estimateCoinDaily('ALPH',399.64e9), null, 'ALPH must not use an unverified per-chain block-time convention');
 context.state.networkDataSource.ALPH = 'BackPoW';
-assert.equal(context.estimateCoinDaily('CKB',63.5e12), null, 'CKB must not invent a partial estimate without confirmed full reward data');
-assert.ok(context.estimateUnsupportedReason('CKB').includes('вручную'), 'CKB must explain its manual pool-income mode');
-assert.equal(context.estimateCoinDaily('ALEO',2e9), null, 'Aleo must not use generic hashrate math');
+const ckb = context.estimateCoinDaily('CKB',63.5e12);
+assert.ok(ckb && ckb.usd > 0, 'CKB must calculate automatically from confirmed miner-reward basis');
+const aleo = context.estimateCoinDaily('ALEO',2e9);
+assert.ok(aleo && aleo.usd > 0, 'ALEO must calculate automatically from confirmed prover-reward basis');
+assert.equal(context.estimateUnsupportedReason('CKB'), '', 'CKB should not show a manual-income warning when miner reward basis exists');
+assert.equal(context.estimateUnsupportedReason('ALEO'), '', 'ALEO should not show a manual-income warning when prover reward basis exists');
 const dash = context.estimateCoinDaily('DASH',1.771239e12);
 const zec = context.estimateCoinDaily('ZEC',841512);
 assert.ok(dash && Math.abs(dash.usd-4.769913)<0.02, `DASH must use miner payout once: ${dash?.usd}`);
