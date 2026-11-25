@@ -456,8 +456,11 @@ async function loadMarket(){
    }
   }
   if(results[1].status==='fulfilled'){
-   const fx=Number(results[1].value.Valute?.USD?.Value||results[1].value.rates?.RUB);
-   if(fx>0&&!state.fxManual){state.fx=fx;$('usdRub').value=state.fx;state.fxUpdatedAt=now;sourceOk.fx=true;}
+   const payload=results[1].value;
+   const fx=Number(payload.Valute?.USD?.Value||payload.rates?.RUB);
+   const sourceTime=Number(payload.time_last_update_unix)>0?Number(payload.time_last_update_unix)*1000:Date.parse(payload.Timestamp||payload.Date);
+   const sourceAge=now-sourceTime;
+   if(fx>0&&sourceTime>0&&sourceAge>=-60*60*1000&&sourceAge<=36*60*60*1000&&!state.fxManual){state.fx=fx;$('usdRub').value=state.fx;state.fxUpdatedAt=sourceTime;sourceOk.fx=true;}
   }
   if(!(state.fx>0)&&num('usdRub')>0)state.fx=num('usdRub');
   if(results[exchangeStart+exchangeTags.length].status==='fulfilled'&&!(state.btcUsd>0)){
