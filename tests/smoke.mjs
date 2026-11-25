@@ -199,6 +199,8 @@ const fullFee = context.calculateDailyProfit(10,1000,1,1,0,0);
 assert.equal(fullFee.net,0, 'A 100% pool fee must leave no mining revenue before electricity');
 const fixedCosts = context.calculateDailyProfit(0,0,0,1,0,30);
 assert.equal(fixedCosts.net,-1, 'Fixed monthly expenses must be charged at one-thirtieth per day even with no mining revenue');
+assert.equal(fixedCosts.month,-30,'A 30-day monthly period must deduct exactly one monthly fixed expense');
+assert.equal(fixedCosts.year,-360,'A 365-day year must deduct exactly 12 monthly fixed expenses, not 365/30 months');
 const scenarios=[
   {input:[10,1000,0.02,1,0.1,0],gross:10,pool:0.2,electric:2.4,extra:0,net:7.4},
   {input:[10,1000,0.02,0.5,0.1,30],gross:5,pool:0.1,electric:1.2,extra:1,net:2.7},
@@ -212,7 +214,7 @@ for (const scenario of scenarios) {
     assert.ok(Math.abs(result[key]-expected)<1e-10,`Profit scenario ${key} must match the independent expected value`);
   }
   assert.equal(result.month,result.net*30,'Monthly profit must equal 30 daily periods');
-  assert.equal(result.year,result.net*365,'Annual profit must equal 365 daily periods');
+  assert.equal(result.year,(result.gross-result.pool-result.electric)*365-scenario.input[5]*12,'Annual profit must deduct exactly 12 monthly fixed expenses');
 }
 const ltcDirect = context.estimateCoinDaily('LTC',16e9);
 const dogeDirect = context.estimateCoinDaily('DOGE',16e9);
