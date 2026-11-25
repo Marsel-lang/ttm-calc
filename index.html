@@ -260,7 +260,7 @@ function estimateUnsupportedReason(tag,device=null){
  if(tag==='ALEO'){
   const normalize=name=>String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
   const model=Array.isArray(c?.ASICS)?c.ASICS.find(x=>normalize(x.name)===normalize(device?.name)):null;
-  if(emission.status!=='needs_live_input'||!model||!(Number(model.revenue)>0)||!(Number(model.revenueAt)>0)){
+  if(!model||!(Number(model.revenue)>0)||!(Number(model.revenueAt)>0)){
    return 'Нет подтверждённой доходности prover для выбранной модели ALEO. Для этой модели пока нет проверенного источника.';
   }
  }
