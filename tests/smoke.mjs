@@ -107,7 +107,7 @@ const context = {
 };
 vm.createContext(context);
 context.fmt=(n,d=2)=>Number(n).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});
-vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn + fxFn + toUsdFn + dailyYieldFn + numberStepFn, context);
+vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn + fxFn + toUsdFn + '\\nglobalThis.toUsdTest=toUsd;' + dailyYieldFn + numberStepFn, context);
 
 assert.equal(context.dailyCoinYield({coins:0.086291},'BTC',0,false),'≈ 0,000000 BTC / день','Displayed coin/day must be zero when uptime is zero');
 assert.equal(context.dailyCoinYield({coins:0.086291},'BTC',100,false),'≈ 0,086291 BTC / день','Displayed coin/day must show the full daily yield at 100% uptime');
@@ -132,13 +132,13 @@ context.state.fxUpdatedAt=Date.now()-37*60*60*1000;
 assert.equal(context.fxIsFresh(),false,'A stale automatic FX quote must be rejected');
 context.state.fxManual=true;
 assert.equal(context.fxIsFresh(),true,'A manually entered FX rate remains valid until cleared');
-assert.ok(Math.abs(context.toUsd(550,'RUB')-(550/82.313))<1e-12,'RUB expenses must convert to USD using the verified exchange rate');
-assert.equal(context.toUsd(5.5,'USD'),5.5,'USD expenses must not be converted a second time');
+assert.ok(Math.abs(context.toUsdTest(550,'RUB')-(550/82.313))<1e-12,'RUB expenses must convert to USD using the verified exchange rate');
+assert.equal(context.toUsdTest(5.5,'USD'),5.5,'USD expenses must not be converted a second time');
 context.state.fxManual=false;
 context.state.fxUpdatedAt=Date.now()-37*60*60*1000;
-assert.ok(Number.isNaN(context.toUsd(550,'RUB')),'RUB expenses must fail closed when the automatic FX rate is stale');
+assert.ok(Number.isNaN(context.toUsdTest(550,'RUB')),'RUB expenses must fail closed when the automatic FX rate is stale');
 context.state.fxManual=true;
-assert.ok(Number.isFinite(context.toUsd(550,'RUB')),'A manually entered FX rate must remain usable');
+assert.ok(Number.isFinite(context.toUsdTest(550,'RUB')),'A manually entered FX rate must remain usable');
 context.state.fxManual=false;
 context.state.fxManual=false;
 const normalizedCkb = context.normalizeCoinRecord({
