@@ -64,7 +64,7 @@ const profitFn = between('function calculateDailyProfit(', 'function calc(){');
 const fxFn = between('function fxIsFresh(){', 'const toUsd=');
 
 const networks = {
-  BTC: {tag:'BTC',nethash:966e18,block_time:600,block_reward:3.125},
+  BTC: {tag:'BTC',nethash:966e18,block_time:600,block_reward:3.125,emission:{oracleRewardBasis:'total',minerShare:1,status:'ok',subsidyNow:3.125,observedReward:3.14}},
   BCH: {tag:'BCH',nethash:3.608014395911283e18,block_time:588.341,block_reward24:3.13,usdPrice:196.02,emission:{oracleRewardBasis:'total',minerShare:1,status:'ok',observedReward:3.13}},
   LTC: {tag:'LTC',nethash:2.640109312639098e15,block_time:150.641,block_reward24:6.25,usdPrice:40.45},
   DOGE: {tag:'DOGE',nethash:2.6179463157657545e15,block_time:63.501,block_reward24:10000,usdPrice:0.054412},
@@ -168,6 +168,8 @@ const etc = context.estimateCoinDaily('ETC',23.4e9);
 assert.ok(etc && etc.usd > 0, 'ETC must use its own Etchash network and block reward');
 const btc = context.estimateCoinDaily('BTC',234e12);
 assert.ok(btc && Math.abs(btc.usd - 8.03) < 0.1, `BTC reference estimate mismatch: ${btc?.usd}`);
+assert.equal(btc.reward,3.125,'BTC expected revenue must use protocol subsidy and exclude volatile transaction fees');
+assert.ok(script.includes("const backpowBtc=state.networkCoins.find(x=>String(x.tag||'').toUpperCase()==='BTC'&&x.source==='BackPoW')"), 'Mempool BTC network data must retain BackPoW protocol subsidy metadata');
 const alph = context.estimateCoinDaily('ALPH',399.64e9);
 assert.ok(alph && Math.abs(alph.usd-0.0602479582)<0.002, `ALPH estimate must match BackPoW aggregate-chain reference: ${alph?.usd}`);
 context.state.networkDataSource.ALPH = 'legacy source';
