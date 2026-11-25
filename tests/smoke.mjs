@@ -48,8 +48,11 @@ const revenueFn = between('function estimateAleoDevice(hashH,device){', 'async f
 
 const networks = {
   BTC: {tag:'BTC',nethash:966e18,block_time:600,block_reward:3.125},
-  LTC: {tag:'LTC',nethash:2.62e15,block_time:150,block_reward:6.2635},
-  DOGE: {tag:'DOGE',nethash:2.62e15,block_time:60,block_reward:10000},
+  BCH: {tag:'BCH',nethash:3.608014395911283e18,block_time:588.341,block_reward24:3.13,usdPrice:196.02,emission:{oracleRewardBasis:'total',minerShare:1,status:'ok',observedReward:3.13}},
+  LTC: {tag:'LTC',nethash:2.640109312639098e15,block_time:150.641,block_reward24:6.25,usdPrice:40.45},
+  DOGE: {tag:'DOGE',nethash:2.6179463157657545e15,block_time:63.501,block_reward24:10000,usdPrice:0.054412},
+  KAS: {tag:'KAS',nethash:3.047004924141843e17,block_time:0.1,block_reward24:1.94454365,usdPrice:0.02614141,emission:{oracleRewardBasis:'total',minerShare:1,status:'ok',observedReward:1.94454365}},
+  ETC: {tag:'ETC',nethash:1.7430490536115375e14,block_time:13.521,block_reward24:1.59,usdPrice:5.72,emission:{oracleRewardBasis:'total',minerShare:1,status:'ok',observedReward:1.59}},
   ALPH: {tag:'ALPH',nethash:4.649987319732508e15,block_time:0.54,block_reward24:0.14,emission:{oracleRewardBasis:'total',minerShare:1}},
   ZEC: {tag:'ZEC',nethash:36.14910666503059e9,block_time:24,block_reward24:0.42,emission:{oracleRewardBasis:'miner',minerShare:0.8}},
   DASH: {tag:'DASH',nethash:3.188109791242718e15,block_time:157.285,block_reward24:0.41,emission:{oracleRewardBasis:'miner',minerShare:0.2}},
@@ -58,7 +61,7 @@ const networks = {
 };
 const context = {
   Number, Math, Date, String, isFinite, parseFloat,
-  state: {prices:{BTC:73691,LTC:80,DOGE:0.15,ALPH:0.031487,ZEC:949.01,DASH:38.12,CKB:0.000749,ALEO:0.02820313},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{ALPH:'BackPoW',ZEC:'BackPoW',DASH:'BackPoW',CKB:'BackPoW',ALEO:'BackPoW'},priceFetchedAt:{BTC:Date.now(),LTC:Date.now(),DOGE:Date.now(),ALPH:Date.now(),ZEC:Date.now(),DASH:Date.now(),CKB:Date.now(),ALEO:Date.now()},priceDataSource:{BTC:'CoinGecko',LTC:'CoinGecko',DOGE:'CoinGecko',ALPH:'CoinGecko',ZEC:'CoinGecko',DASH:'CoinGecko',CKB:'CoinGecko',ALEO:'CoinGecko'}},
+  state: {prices:{BTC:73691,BCH:196.02,LTC:40.45,DOGE:0.054412,KAS:0.02614141,ETC:5.72,ALPH:0.031487,ZEC:949.01,DASH:38.12,CKB:0.000749,ALEO:0.02820313},btcUsd:73691,networkCoins:Object.values(networks),btcNetwork:null,networkDataSource:{ALPH:'BackPoW',ZEC:'BackPoW',DASH:'BackPoW',CKB:'BackPoW',ALEO:'BackPoW'},priceFetchedAt:{BTC:Date.now(),BCH:Date.now(),LTC:Date.now(),DOGE:Date.now(),KAS:Date.now(),ETC:Date.now(),ALPH:Date.now(),ZEC:Date.now(),DASH:Date.now(),CKB:Date.now(),ALEO:Date.now()},priceDataSource:{BTC:'CoinGecko',BCH:'CoinGecko',LTC:'CoinGecko',DOGE:'CoinGecko',KAS:'CoinGecko',ETC:'CoinGecko',ALPH:'CoinGecko',ZEC:'CoinGecko',DASH:'CoinGecko',CKB:'CoinGecko',ALEO:'CoinGecko'}},
   coins: {
     BTC:{algo:'SHA-256'},BCH:{algo:'SHA-256'},LTC:{algo:'Scrypt'},DOGE:{algo:'Scrypt'},
     ALPH:{algo:'Blake3'},ZEC:{algo:'Equihash'},DASH:{algo:'X11'},CKB:{algo:'Eaglesong'},ALEO:{algo:'zkSNARK'}
@@ -95,6 +98,12 @@ assert.equal(context.findNetwork('LTC').nethash, 4, 'BackPoW LTC record must bea
 context.state.networkCoins = savedNetworkCoins;
 assert.equal(context.hashToH({hash:840,unit:'KSOL'}), 840000);
 
+const bch = context.estimateCoinDaily('BCH',234e12);
+assert.ok(bch && bch.usd > 0, 'BCH must use its own SHA-256 network and block reward');
+const kas = context.estimateCoinDaily('KAS',40e12);
+assert.ok(kas && kas.usd > 0, 'KAS must use its own kHeavyHash network and emission');
+const etc = context.estimateCoinDaily('ETC',23.4e9);
+assert.ok(etc && etc.usd > 0, 'ETC must use its own Etchash network and block reward');
 const btc = context.estimateCoinDaily('BTC',234e12);
 assert.ok(btc && Math.abs(btc.usd - 8.03) < 0.1, `BTC reference estimate mismatch: ${btc?.usd}`);
 const alph = context.estimateCoinDaily('ALPH',399.64e9);
