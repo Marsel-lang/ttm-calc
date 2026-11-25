@@ -273,14 +273,15 @@ function estimateCoinDaily(tag,hashH){
  const networkSource=state.networkDataSource?.[tag]||'';
  if(state.networkFetchedAt&&(!networkFetchedAt||Date.now()-networkFetchedAt>(networkSource==='BackPoW'?26:0.25)*60*60*1000))return null;
  const priceFetchedAt=Number(state.priceFetchedAt?.[tag]||0);const priceSource=state.priceDataSource?.[tag]||'';
- if(state.priceFetchedAt&&priceSource!=='manual'&&(!priceFetchedAt||Date.now()-priceFetchedAt>10*60*1000))return null;
+ const priceIsFresh=priceSource==='manual'||(priceFetchedAt>0&&Date.now()-priceFetchedAt<=10*60*1000);
+ const backpowPrice=parseMetric(c.price_usd??c.priceUsd??c.usdPrice);
  let net=parseMetric(c.nethash??c.network_hashrate??c.networkHashrate??c.hashrate??c.avgHashrate);
  const blockTime=parseSeconds(c.block_time??c.blocktime??c.blockTime??c.block_time_s??c.avgBlockTime);
  const observedReward=String(c.emission?.status||'')==='ok'?parseMetric(c.emission?.observedReward):NaN;
  const reward=observedReward>0?observedReward:parseMetric(c.block_reward24??c.block_reward??c.reward??c.blockReward??c.reward24);
  const priceBtc=parseMetric(c.exchange_rate??c.price_btc??c.priceInBtc??c.btc_exchange_rate);
  const marketPrice=Number(state.prices[tag]||0);
- const priceUsd=marketPrice>0?marketPrice:(tag==='BTC'?state.btcUsd:(priceBtc>0&&state.btcUsd>0?priceBtc*state.btcUsd:parseMetric(c.price_usd??c.priceUsd)));
+ const priceUsd=priceIsFresh&&marketPrice>0?marketPrice:(backpowPrice>0?backpowPrice:(tag==='BTC'?state.btcUsd:(priceBtc>0&&state.btcUsd>0?priceBtc*state.btcUsd:NaN)));
  const algo=String(c.algorithm||c.algo||coins[tag]?.algo||'').toLowerCase();
  if(!(net>0)&&blockTime>0){
   const diff=parseMetric(c.difficulty);
@@ -429,7 +430,8 @@ async function loadMarket(){
   const networkFresh=networkAge>=0&&networkAge<=networkMaxAge;
   const selectedPriceSource=state.priceDataSource[selectedTag]||'';
   const selectedPriceFetchedAt=Number(state.priceFetchedAt[selectedTag]||0);
-  const priceFresh=selectedPriceSource==='manual'||(selectedPriceFetchedAt>0&&now-selectedPriceFetchedAt<=10*60*1000);
+  const fallbackPrice=parseMetric(matched?.price_usd??matched?.priceUsd??matched?.usdPrice);
+  const priceFresh=selectedPriceSource==='manual'||(selectedPriceFetchedAt>0&&now-selectedPriceFetchedAt<=10*60*1000)||(!selectedPriceSource&&fallbackPrice>0&&networkFresh);
   if(num('grossRevenue')>0){
    $('status').textContent=estimate?'Используется ручная корректировка дохода вместо автоматической оценки.':'Используется ручная корректировка дохода; автоматическая оценка сейчас недоступна.';
   }else if(estimate?.incomplete&&selectedTag==='LTC'){
@@ -437,7 +439,7 @@ async function loadMarket(){
    $('status').classList.add('error');
   }else if(estimate){
    const priceTags=selectedTag==='LTC'?['LTC','DOGE']:[selectedTag];
-   const priceSources=[...new Set(priceTags.map(tag=>state.priceDataSource[tag]||'CoinGecko'))].join(' + ');
+   const priceSources=[...new Set(priceTags.map(tag=>state.priceDataSource[tag]||(parseMetric(findNetwork(tag)?.price_usd??findNetwork(tag)?.priceUsd??findNetwork(tag)?.usdPrice)>0?'BackPoW':'нет подтверждённого источника')))].join(' + ');
    const deviations=priceTags.map(tag=>{const ref=Number(state.priceReference[tag]||0),livePrice=Number(state.prices[tag]||0);return ref>0&&livePrice>0?Math.abs(livePrice-ref)/ref*100:0;});
    const maxDeviation=Math.max(0,...deviations);
    const hasExchangeQuote=priceTags.some(tag=>state.priceDataSource[tag]==='Binance USDT');
