@@ -294,7 +294,7 @@ function estimateCoinDaily(tag,hashH){
  // Use its 24-hour average reward per block for a steadier expected daily estimate.
  const btcSubsidy=parseMetric(c.emission?.subsidyNow??c.block_reward);
  const reward=tag==='BTC'?(btcSubsidy>0?btcSubsidy:3.125):tag==='CKB'
-  ?parseMetric(c.block_reward24??c.block_reward??c.reward??c.blockReward??c.reward24)
+  ?parseMetric(c.block_reward24??c.reward24)
   :(observedReward>0?observedReward:parseMetric(c.block_reward24??c.block_reward??c.reward??c.blockReward??c.reward24));
  const priceBtc=parseMetric(c.exchange_rate??c.price_btc??c.priceInBtc??c.btc_exchange_rate);
  const marketPrice=Number(state.prices[tag]||0);
