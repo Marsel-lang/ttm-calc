@@ -107,7 +107,7 @@ const context = {
 };
 vm.createContext(context);
 context.fmt=(n,d=2)=>Number(n).toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d});
-vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn + fxFn + toUsdFn + '\\nglobalThis.toUsdTest=toUsd;' + dailyYieldFn + numberStepFn, context);
+vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn + fxFn + toUsdFn + '\nglobalThis.toUsdTest=toUsd;' + dailyYieldFn + numberStepFn, context);
 
 assert.equal(context.dailyCoinYield({coins:0.086291},'BTC',0,false),'≈ 0,000000 BTC / день','Displayed coin/day must be zero when uptime is zero');
 assert.equal(context.dailyCoinYield({coins:0.086291},'BTC',100,false),'≈ 0,086291 BTC / день','Displayed coin/day must show the full daily yield at 100% uptime');
