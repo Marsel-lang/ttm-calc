@@ -197,7 +197,8 @@ function parseMetric(v){
   else numeric=numeric.replace(/,/g,'');
  }else if(numeric.includes(',')){
   const parts=numeric.split(',');
-  if(parts.length>2||parts[parts.length-1].length===3)numeric=parts.join('');
+  if(parts.length===2&&/^[-+]?0,/.test(numeric))numeric=numeric.replace(',','.');
+  else if(parts.length>2||parts[parts.length-1].length===3)numeric=parts.join('');
   else numeric=numeric.replace(',','.');
  }
  const base=Number(numeric);
