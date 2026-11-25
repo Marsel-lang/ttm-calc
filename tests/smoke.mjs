@@ -104,9 +104,10 @@ assert.equal(context.estimateCoinDaily('ALPH',399.64e9), null, 'ALPH must not us
 context.state.networkDataSource.ALPH = 'BackPoW';
 const ckb = context.estimateCoinDaily('CKB',63.5e12);
 assert.ok(ckb && ckb.usd > 0, 'CKB must calculate automatically from confirmed miner-reward basis');
-assert.ok(ckb.usd > 3.5 && ckb.usd < 4.5, 'CKB estimate must remain in the range of the live BackPoW K7 benchmark');
+const expectedCkb = (63.5e12/75.00833379562404e15)*(86400/10.086)*685.45*0.000749;
+assert.ok(Math.abs(ckb.usd-expectedCkb)<0.001, 'CKB must use the 24-hour average block reward, not a single high-fee block');
 const aleo = context.estimateRevenue('ALEO',2e9,{name:'IceRiver AE3',w:3400});
-assert.ok(aleo && Math.abs(aleo.usd-3.0387038347)<0.001, 'ALEO AE3 must use the exact BackPoW device benchmark, scaled by the live price');
+assert.ok(aleo && Math.abs(aleo.usd-(3.0387038347*(2e9/1995400000)))<0.001, 'ALEO AE3 must scale the BackPoW device benchmark by exact hashrate and live price');
 assert.equal(context.estimateRevenue('ALEO',2e9,{name:'Custom device',w:3400}), null, 'ALEO custom devices must not be extrapolated from an unverified prover rate');
 assert.equal(context.estimateUnsupportedReason('CKB'), '', 'CKB should not show a manual-income warning when miner reward basis exists');
 assert.equal(context.estimateUnsupportedReason('ALEO',{name:'IceRiver AE3'}), '', 'ALEO should allow a source-verified exact ASIC benchmark');
