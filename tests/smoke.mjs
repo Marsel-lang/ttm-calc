@@ -15,15 +15,17 @@ assert.equal(idSet.size, ids.length, 'HTML element IDs must be unique');
 const missing = [...new Set([...script.matchAll(/\$\('([^']+)'\)/g)].map(m => m[1]))]
   .filter(id => !idSet.has(id));
 assert.deepEqual(missing, [], 'Every hard-coded DOM selector must exist');
-const sourcesStart=html.indexOf('<p class="note">Источники:');
-const sourcesEnd=html.indexOf('</p>',sourcesStart);
-assert.ok(sourcesStart>=0&&sourcesEnd>sourcesStart,'Compact source list exists');
+const sourcesStart=html.indexOf('<details class="settings"><summary>Источники данных</summary>');
+const sourcesEnd=html.indexOf('</details>',sourcesStart);
+assert.ok(sourcesStart>=0&&sourcesEnd>sourcesStart,'Grouped source section exists');
 const sourcesHtml=html.slice(sourcesStart,sourcesEnd);
-for(const source of ['BackPoW','CoinGecko','Binance','Mempool.space','CBR-XML-Daily','ExchangeRate API','Bitdeer','MicroBT','Bitmain','Canaan','Canaan A1566','IceRiver','iBeLink','ElphaPex','Goldshell','Jasminer','iPollo','Innosilicon']) {
+for (const source of ['CoinGecko','Binance','BackPoW','Mempool.space','CBR-XML-Daily','ExchangeRate-API Open Access','Bitdeer','MicroBT','Bitmain','Canaan','A1566','IceRiver','iBeLink','ElphaPex','Goldshell','Jasminer','iPollo','Innosilicon']) {
   assert.ok(sourcesHtml.includes('>'+source+'</a>'),`Missing source link: ${source}`);
 }
-assert.ok(!/<a\b(?![^>]*\brel="noopener")[^>]*target="_blank"/.test(sourcesHtml),'External source links must use rel=noopener');
-assert.ok(sourcesHtml.includes('href="https://www.exchangerate-api.com"'),'ExchangeRate-API attribution must link to its official provider site');
+assert.ok(!sourcesHtml.includes('>ExchangeRate API</a>'),'Unused ExchangeRate API label must be removed');
+assert.ok(sourcesHtml.includes('https://open.er-api.com/v6/latest/USD'),'FX fallback must point to the endpoint actually used by the calculator');
+assert.ok(sourcesHtml.includes('не опрашиваются при каждом расчёте'),'Manufacturer references must be distinguished from live APIs');
+assert.ok(!/<a\\b(?![^>]*\\brel="noopener")[^>]*target="_blank"/.test(sourcesHtml),'External source links must use rel=noopener');
 assert.ok(html.includes('<span>Доходность за год</span>'),'Annual net return percentage must not be mislabeled as payback period');
 assert.ok(script.includes('const step=numberInputStep(input,current)'),'Custom numeric arrows must use field-appropriate increments');
 
