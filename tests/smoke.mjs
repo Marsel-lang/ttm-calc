@@ -61,6 +61,7 @@ const normalizeFn = between('function normalizeCoinRecord(raw,tag,name){', 'func
 const estimateFns = between('function estimateUnsupportedReason(tag,device=null){', 'function estimateAleoDevice(hashH,device){');
 const revenueFn = between('function estimateAleoDevice(hashH,device){', 'async function loadMarket(){');
 const profitFn = between('function calculateDailyProfit(', 'function calc(){');
+const fxFn = between('function fxIsFresh(){', 'const toUsd=');
 
 const networks = {
   BTC: {tag:'BTC',nethash:966e18,block_time:600,block_reward:3.125},
@@ -85,7 +86,7 @@ const context = {
   findNetwork: tag => networks[tag] || null
 };
 vm.createContext(context);
-vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn, context);
+vm.runInContext(findFn + parseFns + hashFn + normalizeFn + estimateFns + revenueFn + profitFn + fxFn, context);
 
 assert.equal(context.parseMetric('2,5 TH/s'), 2.5e12);
 assert.equal(context.parseMetric('966 EH/s'), 966e18);
@@ -95,6 +96,15 @@ assert.equal(context.parseMetric('685,45'), 685.45);
 assert.equal(context.parseMetric('0.000749'), 0.000749);
 assert.equal(context.parseMetric('1.25 PH/s'), 1.25e15);
 assert.equal(context.parseSeconds('250 ms'), 0.25);
+context.state.fx=82.313;
+context.state.fxUpdatedAt=Date.now()-24*60*60*1000;
+context.state.fxManual=false;
+assert.equal(context.fxIsFresh(),true,'A one-day-old daily FX quote should remain usable');
+context.state.fxUpdatedAt=Date.now()-37*60*60*1000;
+assert.equal(context.fxIsFresh(),false,'A stale automatic FX quote must be rejected');
+context.state.fxManual=true;
+assert.equal(context.fxIsFresh(),true,'A manually entered FX rate remains valid until cleared');
+context.state.fxManual=false;
 const normalizedCkb = context.normalizeCoinRecord({
   Algorithm:'Eaglesong','Block time':10.086,'Bl. reward':775.86,'Bl. reward 24h':685.45,
   Nethash:75.00833379562404e15,usdPrice:0.000749,
